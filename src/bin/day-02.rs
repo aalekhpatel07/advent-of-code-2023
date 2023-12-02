@@ -1,4 +1,3 @@
-
 pub fn main() {
     let data = include_str!("../../data/02.in");
     part1::solve_part1(data);
@@ -31,21 +30,21 @@ pub fn parse_cubes(s: &str) -> (u32, Vec<Set>) {
 
 pub mod part1 {
     pub fn solve_part1(data: &str) {
-
         let mut allowed_cubes = std::collections::HashMap::new();
         allowed_cubes.insert("red", 12);
         allowed_cubes.insert("green", 13);
         allowed_cubes.insert("blue", 14);
 
-        let total: u32 = 
-            data
+        let total: u32 = data
             .lines()
             .filter_map(|line| {
                 let (idx, sets) = crate::parse_cubes(line);
                 for set in sets.iter() {
                     // Can this set be extracted given the current cubes we have?
                     for (color, frequency) in set {
-                        if !allowed_cubes.contains_key(color.as_str()) || allowed_cubes[color.as_str()] < *frequency {
+                        if !allowed_cubes.contains_key(color.as_str())
+                            || allowed_cubes[color.as_str()] < *frequency
+                        {
                             return None;
                         }
                     }
@@ -61,8 +60,7 @@ pub mod part1 {
 pub mod part2 {
 
     pub fn solve_part2(data: &str) {
-        let acc: u32 = 
-            data
+        let acc: u32 = data
             .lines()
             .map(|line| {
                 let (_, sets) = crate::parse_cubes(line);
@@ -70,12 +68,12 @@ pub mod part2 {
                 for set in sets.iter() {
                     for (color, frequency) in set {
                         result_map
-                        .entry(color.into())
-                        .and_modify(|freq| { *freq = (*frequency).max(*freq) })
-                        .or_insert(*frequency);
+                            .entry(color.into())
+                            .and_modify(|freq| *freq = (*frequency).max(*freq))
+                            .or_insert(*frequency);
                     }
                 }
-                result_map.values().product::<u32>()  
+                result_map.values().product::<u32>()
             })
             .sum();
 

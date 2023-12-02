@@ -1,5 +1,5 @@
 pub mod part1 {
-    /// Given a string with digits, find the first and the last 
+    /// Given a string with digits, find the first and the last
     /// occurrence of a digit and combine them to form a two digit
     /// number.
     pub fn parse_digits(s: &str) -> u32 {
@@ -20,19 +20,17 @@ pub mod part1 {
     }
 }
 
-
 pub mod part2 {
-    /// Given a string with digits or the English word 
-    /// representation of the digits, find the first 
-    /// and the last occurrence of a digit and combine 
+    /// Given a string with digits or the English word
+    /// representation of the digits, find the first
+    /// and the last occurrence of a digit and combine
     /// them to form a two digit number.
     pub fn parse_digits(s: &str) -> u32 {
         let mut first_digit = None;
         let mut last_digit = None;
 
         let digits = vec![
-            "one", "two", "three", "four", "five",
-            "six", "seven", "eight", "nine"
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
         ];
 
         for (idx, char) in s.chars().enumerate() {
@@ -64,7 +62,6 @@ pub mod part2 {
     }
 }
 
-
 fn solve_part1(data: &str) {
     let mut sum = 0;
     for line in data.lines() {
@@ -74,7 +71,6 @@ fn solve_part1(data: &str) {
     }
     println!("part 1: {sum}")
 }
-
 
 fn solve_part2(data: &str) {
     let mut sum = 0;
