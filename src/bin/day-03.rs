@@ -5,8 +5,8 @@ use regex::Regex;
 fn main() {
     let data = include_str!("../../data/03.in");
 
-    let res1 = part1::solve_part1(&data);
-    let res2 = part2::solve_part2(&data);
+    let res1 = part1::solve_part1(data);
+    let res2 = part2::solve_part2(data);
 
     println!("part 1: {res1}");
     println!("part 2: {res2}");
@@ -157,8 +157,8 @@ mod tests {
 ......755.
 ...$.*....
 .664.598.."#;
-        assert_eq!(part1::solve_part1(&data), 4361);
-        assert_eq!(part2::solve_part2(&data), 467835);
+        assert_eq!(part1::solve_part1(data), 4361);
+        assert_eq!(part2::solve_part2(data), 467835);
     }
 }
 
