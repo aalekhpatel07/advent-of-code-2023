@@ -1,6 +1,5 @@
-use std::collections::HashSet;
 use regex::Regex;
-
+use std::collections::HashSet;
 
 fn main() {
     let data = include_str!("../../data/03.in");
@@ -15,10 +14,8 @@ fn main() {
 #[derive(Debug, Clone)]
 pub struct Grid(Vec<String>);
 
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash)]
 pub struct Position(isize, isize);
-
 
 impl Grid {
     pub fn new(data: &[&str]) -> Self {
@@ -40,13 +37,11 @@ impl Grid {
                 let col_end = num.end() as isize;
                 let value = num.as_str().parse::<usize>().unwrap();
 
-                results.push(
-                    NumberIsland(
-                        value, 
-                        Position(row_idx as isize, col_start), 
-                        Position(row_idx as isize, col_end)
-                    )
-                );
+                results.push(NumberIsland(
+                    value,
+                    Position(row_idx as isize, col_start),
+                    Position(row_idx as isize, col_end),
+                ));
             }
         }
 
@@ -60,9 +55,7 @@ impl Grid {
 
         for (row_idx, row) in self.0.iter().enumerate() {
             for found in symbols.find_iter(row) {
-                results.push(
-                    Position(row_idx as isize, found.start() as isize)
-                );
+                results.push(Position(row_idx as isize, found.start() as isize));
             }
         }
         results
@@ -70,32 +63,29 @@ impl Grid {
 }
 
 /// A horizontal block on the grid that contains digits that forms
-/// a number. It contains the value of the number, the starting position, 
+/// a number. It contains the value of the number, the starting position,
 /// and the ending position of the run.
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub struct NumberIsland(usize, Position, Position);
 
-
 impl NumberIsland {
-
     /// Return whether the given position is valid and exists in a grid of (num_rows, num_cols).
     pub fn is_valid(&self, position: Position, num_rows: usize, num_cols: usize) -> bool {
         let (row, col) = (position.0, position.1);
         0 <= row && row < num_rows as isize && 0 <= col && col < num_cols as isize
     }
 
-    /// Given a run of digits on the grid, 
+    /// Given a run of digits on the grid,
     /// get the indices on the border of the enclosing box.
-    /// 
+    ///
     /// |--------|
     /// |12345678|
     /// |--------|
     pub fn neighboring_indices(&self, num_rows: usize, num_cols: usize) -> HashSet<Position> {
-
         let mut results = HashSet::new();
 
-        let current_row = self.1.0;
-        let (col_min, col_max) = (self.1.1, self.2.1 - 1);
+        let current_row = self.1 .0;
+        let (col_min, col_max) = (self.1 .1, self.2 .1 - 1);
 
         for col_idx in col_min..=col_max {
             if self.is_valid(Position(current_row - 1, col_idx), num_rows, num_cols) {
@@ -107,14 +97,14 @@ impl NumberIsland {
         }
 
         let left_strip = vec![
-            Position(current_row - 1, self.1.1 - 1),
-            Position(current_row, self.1.1 - 1),
-            Position(current_row + 1, self.1.1 - 1),
+            Position(current_row - 1, self.1 .1 - 1),
+            Position(current_row, self.1 .1 - 1),
+            Position(current_row + 1, self.1 .1 - 1),
         ];
         let right_strip = vec![
-            Position(current_row - 1, self.2.1),
-            Position(current_row, self.2.1),
-            Position(current_row + 1, self.2.1),
+            Position(current_row - 1, self.2 .1),
+            Position(current_row, self.2 .1),
+            Position(current_row + 1, self.2 .1),
         ];
         for position in left_strip {
             if self.is_valid(position, num_rows, num_cols) {
@@ -130,15 +120,15 @@ impl NumberIsland {
         results
     }
 
-    /// Return whether a given position 
-    /// lies on the enclosing box of the 
+    /// Return whether a given position
+    /// lies on the enclosing box of the
     /// number block.
     pub fn is_adjacent_to(&self, position: Position, num_rows: usize, num_cols: usize) -> bool {
         let (pos_row, pos_col) = (position.0, position.1);
-        self.neighboring_indices(num_rows, num_cols).contains(&Position(pos_row, pos_col))
+        self.neighboring_indices(num_rows, num_cols)
+            .contains(&Position(pos_row, pos_col))
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -162,7 +152,6 @@ mod tests {
     }
 }
 
-
 mod part1 {
     use super::Grid;
 
@@ -174,26 +163,24 @@ mod part1 {
         let num_cols = grid.0[0].len();
 
         numbers
-        .iter()
-        .filter_map(|island| {
-            match grid
-                .get_symbols()
-                .iter()
-                .any(|symbol| {
-                    island.is_adjacent_to(*symbol, num_rows, num_cols)
-                }) 
-            {
-                true => Some(island.0),
-                false => None
-            }
-        })
-        .sum()
+            .iter()
+            .filter_map(|island| {
+                match grid
+                    .get_symbols()
+                    .iter()
+                    .any(|symbol| island.is_adjacent_to(*symbol, num_rows, num_cols))
+                {
+                    true => Some(island.0),
+                    false => None,
+                }
+            })
+            .sum()
     }
 }
 
 mod part2 {
-    use std::collections::HashSet;
     use super::Grid;
+    use std::collections::HashSet;
 
     pub fn solve_part2(data: &str) -> usize {
         let grid = Grid::new(&data.lines().collect::<Vec<_>>());
@@ -216,7 +203,10 @@ mod part2 {
             }
 
             if adjacent_islands.len() == 2 {
-                sum += adjacent_islands.iter().map(|island| island.0).product::<usize>();
+                sum += adjacent_islands
+                    .iter()
+                    .map(|island| island.0)
+                    .product::<usize>();
             }
         }
         sum
