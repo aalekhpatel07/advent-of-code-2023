@@ -17,3 +17,4 @@ repository = "https://github.com/aalekhpatel07/advent-of-code-2023.git"
 lto = "fat"
 
 [dependencies]
+regex = "1.10.2"
