@@ -33,7 +33,7 @@ pub fn solve_part1(cards: &str) -> i32 {
     .filter_map(|v| {
         match v {
             0 => None,
-            v => Some(2_i32.pow(v - 1 as u32))
+            v => Some(2_i32.pow(v - 1_u32))
         }
     })
     .sum()
