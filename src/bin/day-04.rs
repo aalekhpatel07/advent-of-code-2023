@@ -1,28 +1,21 @@
-
 pub fn main() {
     let data = include_str!("../../data/04.in");
     println!("part 1: {}", solve_part1(data));
     println!("part 2: {}", solve_part2(data));
 }
 
-pub fn get_wins_per_card(cards: &str) -> impl Iterator<Item=u32> + '_ {
-    cards
-    .lines()
-    .map(|card| {
+pub fn get_wins_per_card(cards: &str) -> impl Iterator<Item = u32> + '_ {
+    cards.lines().map(|card| {
         let (_, rest) = card.split_once(": ").unwrap();
         let (winning_numbers, our_numbers) = rest.split_once(" | ").unwrap();
 
-        let winning_numbers: std::collections::HashSet<String> = 
-            winning_numbers
+        let winning_numbers: std::collections::HashSet<String> = winning_numbers
             .split_whitespace()
             .map(String::from)
             .collect();
 
-        let our_numbers: std::collections::HashSet<String> = 
-            our_numbers
-            .split_whitespace()
-            .map(String::from)
-            .collect();
+        let our_numbers: std::collections::HashSet<String> =
+            our_numbers.split_whitespace().map(String::from).collect();
 
         winning_numbers.intersection(&our_numbers).count() as u32
     })
@@ -30,13 +23,11 @@ pub fn get_wins_per_card(cards: &str) -> impl Iterator<Item=u32> + '_ {
 
 pub fn solve_part1(cards: &str) -> i32 {
     get_wins_per_card(cards)
-    .filter_map(|v| {
-        match v {
+        .filter_map(|v| match v {
             0 => None,
-            v => Some(2_i32.pow(v - 1_u32))
-        }
-    })
-    .sum()
+            v => Some(2_i32.pow(v - 1_u32)),
+        })
+        .sum()
 }
 
 pub fn solve_part2(cards_str: &str) -> i32 {
