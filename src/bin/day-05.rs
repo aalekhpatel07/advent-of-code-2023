@@ -214,10 +214,9 @@ pub fn parse_seeds_and_almanac(data: &str) -> (Vec<u64>, Almanac) {
     let lines = data.split("\n\n").collect::<Vec<_>>();
     let seeds: Vec<_> = 
         lines[0]
-        .split(":")
+        .split(':')
         .last()
         .unwrap()
-        .trim()
         .split_whitespace()
         .map(|num| num.parse::<u64>().unwrap())
         .collect();
@@ -230,7 +229,7 @@ pub fn parse_seeds_and_almanac(data: &str) -> (Vec<u64>, Almanac) {
         let mappings: Vec<_> = 
         mappings
         .trim()
-        .split("\n")
+        .split('\n')
         .map(|s| s.parse::<Mapping>().unwrap())
         .collect();
 
