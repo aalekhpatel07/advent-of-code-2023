@@ -39,16 +39,16 @@ pub fn count_wins(max_time: u64, min_distance: u64) -> usize {
 
 pub fn solve_part1(data: &str) -> usize {
     let data = data.lines().collect::<Vec<_>>();
-    let times = data.first().unwrap().strip_prefix("Time:").unwrap().trim().split_whitespace().map(|s| s.parse().unwrap()).collect::<Vec<u64>>();
-    let distances = data.last().unwrap().strip_prefix("Distance:").unwrap().trim().split_whitespace().map(|s| s.parse().unwrap()).collect::<Vec<u64>>();
+    let times = data.first().unwrap().strip_prefix("Time:").unwrap().split_whitespace().map(|s| s.parse().unwrap()).collect::<Vec<u64>>();
+    let distances = data.last().unwrap().strip_prefix("Distance:").unwrap().split_whitespace().map(|s| s.parse().unwrap()).collect::<Vec<u64>>();
 
     times.iter().zip(distances.iter()).map(|(&max_time, &min_distance)| count_wins(max_time, min_distance)).product()
 }
 
 pub fn solve_part2(data: &str) -> usize {
     let data = data.lines().collect::<Vec<_>>();
-    let max_time: u64 = data.first().unwrap().strip_prefix("Time:").unwrap().chars().filter(|c| c.is_digit(10)).collect::<String>().parse().unwrap();
-    let min_distance: u64 = data.last().unwrap().strip_prefix("Distance:").unwrap().chars().filter(|c| c.is_digit(10)).collect::<String>().parse().unwrap();
+    let max_time: u64 = data.first().unwrap().strip_prefix("Time:").unwrap().chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap();
+    let min_distance: u64 = data.last().unwrap().strip_prefix("Distance:").unwrap().chars().filter(|c| c.is_ascii_digit()).collect::<String>().parse().unwrap();
 
     count_wins(max_time, min_distance)
 }
