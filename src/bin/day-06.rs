@@ -44,13 +44,13 @@ pub fn count_wins(max_time: u64, min_distance: u64) -> usize {
     // If the boundary happens to be an integer, 
     // we need to exclude that from the count.
     if lower_bound.fract() == 0.0 {
-        lower_bound = lower_bound + 1.0;
+        lower_bound += 1.0;
     } else {
         lower_bound = lower_bound.ceil();
     }
 
     if upper_bound.fract() == 0.0 {
-        upper_bound = upper_bound - 1.0;
+        upper_bound -= 1.0;
     } else {
         upper_bound = upper_bound.floor();
     }
