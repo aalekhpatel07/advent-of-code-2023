@@ -28,20 +28,21 @@ Distance:   358   1054   1807   1080";
 }
 
 /// Find out the number of integer points that satisfy:
-/// 
+///
 /// (max_time - x) * x > min_distance
 /// where x in [0..max_time]
-/// 
-/// Straightforward approach of finding the interval with the quadratic 
+///
+/// Straightforward approach of finding the interval with the quadratic
 /// formula, then counting the integers that lie inside (and not including)
 /// the interval.
 #[inline(always)]
 pub fn count_wins(max_time: u64, min_distance: u64) -> usize {
+    let mut lower_bound =
+        0.5 * (max_time as f64 - ((max_time as f64).powf(2.0) - 4.0 * min_distance as f64).sqrt());
+    let mut upper_bound =
+        0.5 * (max_time as f64 + ((max_time as f64).powf(2.0) - 4.0 * min_distance as f64).sqrt());
 
-    let mut lower_bound = 0.5 * (max_time as f64 - ((max_time as f64).powf(2.0) - 4.0 * min_distance as f64).sqrt());
-    let mut upper_bound = 0.5 * (max_time as f64 + ((max_time as f64).powf(2.0) - 4.0 * min_distance as f64).sqrt());
-    
-    // If the boundary happens to be an integer, 
+    // If the boundary happens to be an integer,
     // we need to exclude that from the count.
     if lower_bound.fract() == 0.0 {
         lower_bound += 1.0;
