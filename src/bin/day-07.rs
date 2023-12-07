@@ -1,42 +1,38 @@
 pub fn main() {
     let data = include_str!("../../data/07.in");
-    println!("part 1: {}", solve(data, |hand1, hand2| hand1.cmp_part1(hand2)));
-    println!("part 2: {}", solve(data, |hand1, hand2| hand1.cmp_part2(hand2)));
+    println!(
+        "part 1: {}",
+        solve(data, |hand1, hand2| hand1.cmp_part1(hand2))
+    );
+    println!(
+        "part 2: {}",
+        solve(data, |hand1, hand2| hand1.cmp_part2(hand2))
+    );
 }
 
-pub fn solve<F>(data: &str, cmp: F) -> usize 
+pub fn solve<F>(data: &str, cmp: F) -> usize
 where
-    F: Fn(&Hand, &Hand) -> Option<Ordering>
+    F: Fn(&Hand, &Hand) -> Option<Ordering>,
 {
-
-    let mut hands: Vec<_> =
-
-    data
-    .lines()
-    .map(|line| {
-        Hand::new(line)
-    }).collect();
+    let mut hands: Vec<_> = data.lines().map(|line| Hand::new(line)).collect();
 
     hands.sort_by(|hand1, hand2| cmp(hand1, hand2).unwrap());
 
     hands
-    .iter()
-    .enumerate()
-    .map(|(idx, hand)| {
-        (idx + 1) * hand.bid
-    })
-    .sum()
+        .iter()
+        .enumerate()
+        .map(|(idx, hand)| (idx + 1) * hand.bid)
+        .sum()
 }
 
-use std::{collections::HashMap, cmp::Ordering};
+use std::{cmp::Ordering, collections::HashMap};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Hand {
     cards: [Card; 5],
     bid: usize,
-    counts: HashMap<Card, usize>
+    counts: HashMap<Card, usize>,
 }
-
 
 impl std::fmt::Display for Hand {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -50,7 +46,6 @@ impl std::fmt::Display for Hand {
     }
 }
 
-
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum HandKind {
     FiveOfAKind = 7,
@@ -60,7 +55,7 @@ pub enum HandKind {
     TwoPair = 3,
     OnePair = 2,
     #[default]
-    HighCard = 1
+    HighCard = 1,
 }
 
 #[repr(u8)]
@@ -82,11 +77,10 @@ impl std::fmt::Display for Card {
             Self::Q => write!(f, "Q"),
             Self::J => write!(f, "J"),
             Self::T => write!(f, "T"),
-            Self::Num(digit) => write!(f, "{}", digit)
+            Self::Num(digit) => write!(f, "{}", digit),
         }
     }
 }
-
 
 impl TryFrom<char> for Card {
     type Error = std::io::Error;
@@ -98,20 +92,21 @@ impl TryFrom<char> for Card {
             'J' => Ok(Card::J),
             'T' => Ok(Card::T),
             digit @ '0'..='9' => Ok(Card::Num(digit.to_digit(10).unwrap() as u8)),
-            _ => Err(std::io::Error::new(std::io::ErrorKind::InvalidData, "unknown card type."))
+            _ => Err(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "unknown card type.",
+            )),
         }
     }
 }
 
-
 impl Hand {
     fn cmp_part1(&self, other: &Self) -> Option<std::cmp::Ordering> {
-
         let own_kind = self.kind_part1();
         let other_kind = other.kind_part1();
 
         if own_kind != other_kind {
-            return own_kind.partial_cmp(&other_kind)
+            return own_kind.partial_cmp(&other_kind);
         }
 
         for (own_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
@@ -123,28 +118,21 @@ impl Hand {
         Some(std::cmp::Ordering::Equal)
     }
 
-
     fn cmp_part2(&self, other: &Self) -> Option<std::cmp::Ordering> {
-
         let own_kind = self.kind_part2();
         let other_kind = other.kind_part2();
 
         if own_kind != other_kind {
-            return own_kind.partial_cmp(&other_kind)
+            return own_kind.partial_cmp(&other_kind);
         }
 
         for (own_card, other_card) in self.cards.iter().zip(other.cards.iter()) {
-
             match (*own_card, *other_card) {
                 (Card::J, Card::J) => {
                     continue;
-                },
-                (Card::J, _) => {
-                    return Some(Ordering::Less)
-                },
-                (_, Card::J) => {
-                    return Some(Ordering::Greater)
-                },
+                }
+                (Card::J, _) => return Some(Ordering::Less),
+                (_, Card::J) => return Some(Ordering::Greater),
                 _ => {}
             }
 
@@ -186,7 +174,7 @@ impl Hand {
         }
         HandKind::HighCard
     }
-    
+
     fn kind_part2(&self) -> HandKind {
         let num_wildcards = *self.counts.get(&Card::J).unwrap_or(&0);
         if num_wildcards == 5 {
@@ -198,7 +186,7 @@ impl Hand {
                 if num_wildcards > 0 {
                     return HandKind::FiveOfAKind;
                 }
-                
+
                 let counts = self.counts.iter().collect::<Vec<_>>();
                 let first = *counts.get(0).unwrap();
 
@@ -207,7 +195,7 @@ impl Hand {
                 } else {
                     HandKind::FullHouse
                 }
-            },
+            }
             3 => {
                 if num_wildcards == 2 || num_wildcards == 3 {
                     return HandKind::FourOfAKind;
@@ -231,7 +219,7 @@ impl Hand {
                     return HandKind::ThreeOfAKind;
                 }
                 HandKind::OnePair
-            },
+            }
             4 => {
                 if num_wildcards == 0 {
                     return HandKind::OnePair;
@@ -240,43 +228,42 @@ impl Hand {
                     return HandKind::ThreeOfAKind;
                 }
                 HandKind::ThreeOfAKind
-            },
+            }
             5 => {
                 if num_wildcards == 0 {
                     return HandKind::HighCard;
                 }
                 HandKind::OnePair
             }
-            _ => unreachable!("welp. an uncovered case? unlikely: {}", self)
-        }
+            _ => unreachable!("welp. an uncovered case? unlikely: {}", self),
+        };
     }
 }
 
 impl Hand {
     pub fn new(s: &str) -> Self {
         let (hand_str, bid) = s.split_once(' ').unwrap();
-        let data: [Card; 5] = hand_str.chars().map(|c| c.try_into().unwrap()).collect::<Vec<_>>().try_into().unwrap();
+        let data: [Card; 5] = hand_str
+            .chars()
+            .map(|c| c.try_into().unwrap())
+            .collect::<Vec<_>>()
+            .try_into()
+            .unwrap();
         let bid = bid.parse().unwrap();
 
         let mut counts: HashMap<Card, usize> = HashMap::default();
 
         for card in data.iter() {
-            counts
-            .entry(*card)
-            .and_modify(|c| {*c += 1})
-            .or_insert(1);
+            counts.entry(*card).and_modify(|c| *c += 1).or_insert(1);
         }
 
         Self {
             cards: data,
             bid,
-            counts
+            counts,
         }
     }
-
-
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -289,7 +276,13 @@ KK677 28
 KTJJT 220
 QQQJA 483";
 
-        assert_eq!(super::solve(data, |hand1, hand2| hand1.cmp_part1(hand2)), 6440);
-        assert_eq!(super::solve(data, |hand1, hand2| hand1.cmp_part2(hand2)), 5905);
+        assert_eq!(
+            super::solve(data, |hand1, hand2| hand1.cmp_part1(hand2)),
+            6440
+        );
+        assert_eq!(
+            super::solve(data, |hand1, hand2| hand1.cmp_part2(hand2)),
+            5905
+        );
     }
 }
