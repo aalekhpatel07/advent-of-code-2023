@@ -77,11 +77,11 @@ pub enum Card {
 impl std::fmt::Display for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::A => write!(f, "{}", 'A'),
-            Self::K => write!(f, "{}", 'K'),
-            Self::Q => write!(f, "{}", 'Q'),
-            Self::J => write!(f, "{}", 'J'),
-            Self::T => write!(f, "{}", 'T'),
+            Self::A => write!(f, "A"),
+            Self::K => write!(f, "K"),
+            Self::Q => write!(f, "Q"),
+            Self::J => write!(f, "J"),
+            Self::T => write!(f, "T"),
             Self::Num(digit) => write!(f, "{}", digit)
         }
     }
@@ -254,7 +254,7 @@ impl Hand {
 
 impl Hand {
     pub fn new(s: &str) -> Self {
-        let (hand_str, bid) = s.split_once(" ").unwrap();
+        let (hand_str, bid) = s.split_once(' ').unwrap();
         let data: [Card; 5] = hand_str.chars().map(|c| c.try_into().unwrap()).collect::<Vec<_>>().try_into().unwrap();
         let bid = bid.parse().unwrap();
 
