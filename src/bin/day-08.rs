@@ -27,7 +27,7 @@ pub fn solve_part2(data: &str) -> usize {
         .map(|node| {
             count_steps(&seq, &mapping, node, |node| node.ends_with('Z'))
         })
-        .reduce(|res, curr|lcm(res, curr))
+        .reduce(lcm)
         .expect("starting nodes to be non-empty.")
 }
 
@@ -44,7 +44,7 @@ where
     let mut counter = 0;
 
     for &selection in seq.iter().cycle() {
-        if end_cond(&start_node) {
+        if end_cond(start_node) {
             break;
         }
         start_node = mapping.get(start_node).expect("start_node to exist in the mapping")[selection].as_str();

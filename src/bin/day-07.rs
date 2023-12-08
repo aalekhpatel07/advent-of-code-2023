@@ -14,7 +14,7 @@ pub fn solve<F>(data: &str, cmp: F) -> usize
 where
     F: Fn(&Hand, &Hand) -> Option<Ordering>,
 {
-    let mut hands: Vec<_> = data.lines().map(|line| Hand::new(line)).collect();
+    let mut hands: Vec<_> = data.lines().map(Hand::new).collect();
 
     hands.sort_by(|hand1, hand2| cmp(hand1, hand2).unwrap());
 

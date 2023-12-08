@@ -23,7 +23,6 @@ pub fn lcm(a: usize, b: usize) -> usize {
 /// Given a stream of numbers, compute the smallest number that is divisible by
 /// all of the numbers in the stream.
 pub fn lcm_many<'a>(numbers: impl Iterator<Item=&'a usize>) -> Option<usize> {
-    numbers
-    .map(|num| *num)
-    .reduce(|res, curr| lcm(res, curr))
+    numbers.copied()
+    .reduce(lcm)
 }
