@@ -1,12 +1,10 @@
 use aoc_2023::math::lcm;
 
-
 pub fn main() {
     let data = include_str!("../../data/08.in");
     println!("part 1: {}", solve_part1(data));
     println!("part 2: {}", solve_part2(data));
 }
-
 
 /// Compute the minimum number of steps needed to traverse from "AAA" to "ZZZ"
 /// given we could only follow a never-ending cycle of instructions.
@@ -15,30 +13,26 @@ pub fn solve_part1(data: &str) -> usize {
     count_steps(&seq, &mapping, "AAA", |node| node == "ZZZ")
 }
 
-
 /// Compute the least common multiple of the minimum number of steps needed for each starting node to reach an ending node
 /// following left/right from a never-ending cycle of instructions.
 pub fn solve_part2(data: &str) -> usize {
     let (seq, mapping) = parse_sequence_and_mappings(data);
 
-        mapping
+    mapping
         .keys()
         .filter(|&node| node.ends_with('A'))
-        .map(|node| {
-            count_steps(&seq, &mapping, node, |node| node.ends_with('Z'))
-        })
+        .map(|node| count_steps(&seq, &mapping, node, |node| node.ends_with('Z')))
         .reduce(lcm)
         .expect("starting nodes to be non-empty.")
 }
 
 pub type Mapping = std::collections::HashMap<String, [String; 2]>;
 
-
 /// Traverse the mapping following the left/right instructions from the sequence
 /// and stop when the start node satisfies the ending condition.
-pub fn count_steps<F>(seq: &[usize], mapping: &Mapping, start_node: &str, end_cond: F) -> usize 
+pub fn count_steps<F>(seq: &[usize], mapping: &Mapping, start_node: &str, end_cond: F) -> usize
 where
-    F: Fn(&str) -> bool
+    F: Fn(&str) -> bool,
 {
     let mut start_node = start_node;
     let mut counter = 0;
@@ -47,13 +41,15 @@ where
         if end_cond(start_node) {
             break;
         }
-        start_node = mapping.get(start_node).expect("start_node to exist in the mapping")[selection].as_str();
+        start_node = mapping
+            .get(start_node)
+            .expect("start_node to exist in the mapping")[selection]
+            .as_str();
         counter += 1;
     }
 
     counter
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -102,26 +98,21 @@ XXX = (XXX, XXX)";
     }
 }
 
-
 pub fn parse_sequence_and_mappings(data: &str) -> (Vec<usize>, Mapping) {
     let blocks: Vec<String> = data.split("\n\n").map(String::from).collect();
 
-    let sequence = 
-        blocks
+    let sequence = blocks
         .first()
         .unwrap()
         .chars()
-        .map(|c| {
-            match c {
-                'R' => 1usize,
-                'L' => 0,
-                _ => unreachable!("only R or L expected")
-            }
+        .map(|c| match c {
+            'R' => 1usize,
+            'L' => 0,
+            _ => unreachable!("only R or L expected"),
         })
         .collect::<Vec<_>>();
 
-    let mappings: Mapping = 
-        blocks
+    let mappings: Mapping = blocks
         .last()
         .unwrap()
         .lines()
@@ -135,4 +126,3 @@ pub fn parse_sequence_and_mappings(data: &str) -> (Vec<usize>, Mapping) {
 
     (sequence, mappings)
 }
-
