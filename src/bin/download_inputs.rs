@@ -105,7 +105,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let date_range = match opts.day {
         Some(day) => day as u32..day as u32 + 1,
-        None => 1..Utc::now().day() + 1,
+        None => 1..(Utc::now().day() + 1).min(26),
     };
 
     let client = reqwest::Client::new();
