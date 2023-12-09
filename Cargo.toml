@@ -16,5 +16,20 @@ repository = "https://github.com/aalekhpatel07/advent-of-code-2023.git"
 [profile.release]
 lto = "fat"
 
+[features]
+default = ["download-inputs"]
+download-inputs = ["dep:bytes", "dep:chrono", "dep:clap", "dep:reqwest", "dep:tokio", "dep:dotenv"]
+
+[[bin]]
+name = "get-inputs"
+path = "src/bin/download_inputs.rs"
+required-features = ["download-inputs"]
+
 [dependencies]
+bytes = { version = "1.5.0", optional = true }
+chrono = { version = "0.4.31", optional = true }
+clap = { version = "4.4.11", features = ["derive", "env"], optional = true }
+dotenv = { version = "0.15.0", optional = true }
 regex = "1.10.2"
+reqwest = { version = "0.11.22", features = ["cookies"], optional = true }
+tokio = { version = "1.35.0", features = ["rt-multi-thread", "tokio-macros", "full"], optional = true }
