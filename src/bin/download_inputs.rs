@@ -1,7 +1,7 @@
-use std::{env::var, path::PathBuf};
-use clap::Parser;
 use bytes::Bytes;
-use chrono::{Utc, Datelike};
+use chrono::{Datelike, Utc};
+use clap::Parser;
+use std::{env::var, path::PathBuf};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Opts {
@@ -13,9 +13,13 @@ pub struct Opts {
     data_dir: Option<PathBuf>,
 }
 
-pub async fn download_inputs(day: u32, client: &reqwest::Client, session: &str) -> Result<bytes::Bytes, String> {
+pub async fn download_inputs(
+    day: u32,
+    client: &reqwest::Client,
+    session: &str,
+) -> Result<bytes::Bytes, String> {
     let url = format!("https://adventofcode.com/2023/day/{day}/input");
-    
+
     let Ok(resp) = 
     client
     .get(&url)
@@ -28,19 +32,18 @@ pub async fn download_inputs(day: u32, client: &reqwest::Client, session: &str) 
     };
 
     if resp.status() != 200 {
-        return Err(format!("could not get a successful response for day: {}", day));
+        return Err(format!(
+            "could not get a successful response for day: {}",
+            day
+        ));
     }
 
     resp.bytes().await.map_err(|err| err.to_string())
 }
 
-pub async fn save_inputs<P>(
-    day: u32, 
-    contents: Bytes, 
-    root_dir: P
-) -> std::io::Result<()>
+pub async fn save_inputs<P>(day: u32, contents: Bytes, root_dir: P) -> std::io::Result<()>
 where
-    P: AsRef<std::path::Path>
+    P: AsRef<std::path::Path>,
 {
     let root_dir = root_dir.as_ref();
     let filepath = root_dir.join(format!("{:02}.in", day));
@@ -48,28 +51,28 @@ where
 }
 
 pub async fn extract_input<P>(
-    date: u32, 
+    date: u32,
     client: reqwest::Client,
     root_dir: P,
     session: String,
 ) -> std::result::Result<(), String>
 where
-    P: AsRef<std::path::Path>
+    P: AsRef<std::path::Path>,
 {
     println!("Downloading contents for day {date:02}");
     let contents = download_inputs(date, &client, &session).await?;
-    save_inputs(date, contents, root_dir).await.map_err(|err| err.to_string())
+    save_inputs(date, contents, root_dir)
+        .await
+        .map_err(|err| err.to_string())
 }
 
-
 pub async fn extract_inputs<P>(
-    day_range: std::ops::Range<u32>, 
+    day_range: std::ops::Range<u32>,
     client: &reqwest::Client,
     root_dir: P,
     session: String,
-)
-where
-    P: AsRef<std::path::Path> + Clone + Send + Sync + 'static
+) where
+    P: AsRef<std::path::Path> + Clone + Send + Sync + 'static,
 {
     let mut handles = vec![];
     for date in day_range {
@@ -93,29 +96,25 @@ where
 pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().unwrap();
     let opts = Opts::parse();
-    
+
     let date_range = match opts.day {
         Some(day) => day as u32..day as u32 + 1,
-        None => {
-            1..Utc::now().day()+1
-        }
+        None => 1..Utc::now().day() + 1,
     };
 
     let client = reqwest::Client::new();
     let root_dir = match opts.data_dir {
         Some(dir) => dir,
         None => {
-
-            let path = std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("data/");
+            let path =
+                std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("data/");
             println!("{:#?}", path);
             path
         }
     };
     let aoc_session = match opts.aoc_session {
-        None => {
-            var("AOC_SESSION").expect("No AOC_SESSION provided.")
-        },
-        Some(session) => session
+        None => var("AOC_SESSION").expect("No AOC_SESSION provided."),
+        Some(session) => session,
     };
 
     extract_inputs(date_range, &client, root_dir, aoc_session).await;
