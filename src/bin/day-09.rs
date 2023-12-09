@@ -9,11 +9,10 @@ pub fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{solve_part1, solve_part2, Sequence, parse_sequence};
+    use super::{parse_sequence, solve_part1, solve_part2, Sequence};
 
     #[test]
     fn test_smol_data() {
-
         let data = r"0 3 6 9 12 15
 1 3 6 10 15 21
 10 13 16 21 30 45";
@@ -21,24 +20,21 @@ mod tests {
 
         assert_eq!(solve_part1(&sequences), 114);
         assert_eq!(solve_part2(&sequences), 2);
-
     }
 }
 
 pub fn solve_part1(sequences: &[Sequence]) -> isize {
-
     sequences
-    .iter()
-    .map(|seq| predict_next(build_stack(seq)))
-    .sum()
+        .iter()
+        .map(|seq| predict_next(build_stack(seq)))
+        .sum()
 }
 
 pub fn solve_part2(sequences: &[Sequence]) -> isize {
-
     sequences
-    .iter()
-    .map(|seq| predict_previous(build_stack(seq)))
-    .sum()
+        .iter()
+        .map(|seq| predict_previous(build_stack(seq)))
+        .sum()
 }
 
 pub fn predict_next(mut stack: Vec<Sequence>) -> isize {
@@ -60,7 +56,10 @@ pub fn predict_previous(mut stack: Vec<Sequence>) -> isize {
 }
 
 pub fn parse_sequence(line: &str) -> Sequence {
-    line.split_whitespace().map(|s| s.parse()).collect::<Result<Sequence, _>>().unwrap()
+    line.split_whitespace()
+        .map(|s| s.parse())
+        .collect::<Result<Sequence, _>>()
+        .unwrap()
 }
 
 pub fn build_stack(sequence: &Sequence) -> Vec<Sequence> {
@@ -79,11 +78,9 @@ pub fn build_stack(sequence: &Sequence) -> Vec<Sequence> {
 }
 
 pub fn diffs(seq: &Sequence) -> Sequence {
-    seq
-    .iter()
-    .skip(1)
-    .zip(seq.iter().take(seq.len() - 1))
-    .map(|(&next, &prev)| next - prev)
-    .collect()
+    seq.iter()
+        .skip(1)
+        .zip(seq.iter().take(seq.len() - 1))
+        .map(|(&next, &prev)| next - prev)
+        .collect()
 }
-
