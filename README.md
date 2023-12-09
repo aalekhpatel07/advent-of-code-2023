@@ -4,7 +4,7 @@ These are my solutions to puzzles from this year's [Advent of Code](https://adve
 
 ## Usage
 
-1. Fetch your session cookie that can be obtained by [logging in](https:// adventofcode.com/2023/auth/login) to Advent of Code.
+1. Fetch your session cookie that can be obtained by [logging in](https://adventofcode.com/2023/auth/login) to Advent of Code.
 2. Build the `get-inputs` executable that will fetch the inputs for the individual days automatically to a `./data/` directory.
     ```sh
     cargo build --release --bin get-inputs --features=inputs
