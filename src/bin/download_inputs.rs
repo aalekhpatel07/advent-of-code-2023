@@ -114,7 +114,6 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
         None => {
             let path =
                 std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap_or(".".to_string())).join("data/");
-            println!("{:#?}", path);
             path
         }
     };
