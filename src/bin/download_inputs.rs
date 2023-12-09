@@ -80,7 +80,6 @@ where
         handles.push(tokio::task::spawn(async move {
             if let Err(err) = extract_input(date, client, root_dir, session.clone()).await {
                 eprintln!("{}", err);
-                return;
             }
         }));
     }
