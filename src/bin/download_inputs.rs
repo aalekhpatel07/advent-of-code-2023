@@ -5,11 +5,11 @@ use std::{env::var, path::PathBuf};
 
 #[derive(Debug, Clone, Parser)]
 pub struct Opts {
-    #[arg(env = "AOC_SESSION")]
+    #[arg(short, long, env = "AOC_SESSION")]
     aoc_session: Option<String>,
-    #[arg(default_value = None)]
+    #[arg(short, long, default_value = None)]
     day: Option<usize>,
-    #[arg(default_value = None)]
+    #[arg(short, long, default_value = None)]
     data_dir: Option<PathBuf>,
 }
 
@@ -113,7 +113,7 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(dir) => dir,
         None => {
             let path =
-                std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap()).join("data/");
+                std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap_or(".".to_string())).join("data/");
             println!("{:#?}", path);
             path
         }
