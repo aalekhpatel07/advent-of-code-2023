@@ -49,7 +49,10 @@ where
     let filepath = root_dir.join(format!("{:02}.in", day));
     let res = tokio::fs::write(filepath.clone(), contents).await;
     if res.is_ok() {
-        eprintln!("Downloaded inputs for day {day:02} to: {}", filepath.to_string_lossy());
+        eprintln!(
+            "Downloaded inputs for day {day:02} to: {}",
+            filepath.to_string_lossy()
+        );
     }
     res
 }
