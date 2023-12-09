@@ -47,7 +47,11 @@ where
 {
     let root_dir = root_dir.as_ref();
     let filepath = root_dir.join(format!("{:02}.in", day));
-    tokio::fs::write(filepath, contents).await
+    let res = tokio::fs::write(filepath.clone(), contents).await;
+    if res.is_ok() {
+        eprintln!("Downloaded inputs for day {day:02} to: {}", filepath.to_string_lossy());
+    }
+    res
 }
 
 pub async fn extract_input<P>(
@@ -59,7 +63,6 @@ pub async fn extract_input<P>(
 where
     P: AsRef<std::path::Path>,
 {
-    println!("Downloading contents for day {date:02}");
     let contents = download_inputs(date, &client, &session).await?;
     save_inputs(date, contents, root_dir)
         .await
