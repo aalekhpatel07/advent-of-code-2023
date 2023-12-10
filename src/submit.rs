@@ -24,7 +24,7 @@ pub fn submit(day: u32, part: u32, solution: &str) -> Result<bool, String> {
 
     let res = 
         client
-        .post(&url)
+        .post(url)
         .form(&form)
         .header("Cookie", format!("session={session}"))
         .send()
@@ -32,7 +32,7 @@ pub fn submit(day: u32, part: u32, solution: &str) -> Result<bool, String> {
 
     if res.status() != 200 {
         eprintln!("{}\n\n{}", res.status(), String::from_utf8(res.bytes().unwrap().to_vec()).unwrap());
-        return Err(format!("received a bad response from the server."));
+        return Err("received a bad response from the server.".to_string());
     }
     let contents = String::from_utf8(res.bytes().unwrap().to_vec()).expect("received invalid utf-8 response");
     let needle = "That's not the right answer";
