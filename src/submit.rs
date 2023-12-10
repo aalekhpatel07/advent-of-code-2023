@@ -29,12 +29,8 @@ pub fn submit(day: u32, part: u32, solution: &str) -> Result<bool, String> {
         );
         return Err("received a bad response from the server.".to_string());
     }
-    let contents =
+    let haystack =
         String::from_utf8(res.bytes().unwrap().to_vec()).expect("received invalid utf-8 response");
     let needle = "That's not the right answer";
-
-    if contents.contains(needle) {
-        return Ok(false);
-    }
-    Ok(true)
+    Ok(!haystack.contains(needle))
 }
