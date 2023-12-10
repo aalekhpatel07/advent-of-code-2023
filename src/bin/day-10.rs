@@ -1,7 +1,6 @@
-use std::collections::{HashMap, HashSet};
-use std::collections::binary_heap::BinaryHeap;
 use colored::Colorize;
-
+use std::collections::binary_heap::BinaryHeap;
+use std::collections::{HashMap, HashSet};
 
 pub fn main() {
     let data = include_str!("../../data/10.in");
@@ -91,7 +90,6 @@ pub struct Coord(isize, isize);
 #[derive(Debug, Clone)]
 pub struct Graph(Vec<Vec<char>>);
 
-
 impl std::ops::Add for Coord {
     type Output = Self;
     fn add(self, rhs: Self) -> Self::Output {
@@ -106,34 +104,41 @@ impl std::ops::Sub for Coord {
     }
 }
 
-
 impl Graph {
-
     pub fn get(&self, coord: Coord) -> Option<char> {
         if !self.is_valid(coord) {
             return None;
         }
-        Some(*self.0.get(coord.0 as usize).unwrap().get(coord.1 as usize).unwrap())
+        Some(
+            *self
+                .0
+                .get(coord.0 as usize)
+                .unwrap()
+                .get(coord.1 as usize)
+                .unwrap(),
+        )
     }
 
     pub fn find_start(&self) -> Option<Coord> {
         for (row_idx, row) in self.0.iter().enumerate() {
             for (col_idx, value) in row.iter().enumerate() {
                 if *value == 'S' {
-                    return Some(Coord(row_idx as isize, col_idx as isize))
+                    return Some(Coord(row_idx as isize, col_idx as isize));
                 }
             }
         }
         None
     }
 
-    fn find_and_rectify_start_shape(&mut self){
-        let shape = 
-            self
+    fn find_and_rectify_start_shape(&mut self) {
+        let shape = self
             .find_start()
             .map(|coord| {
                 let neighbors = self.get_neighbors_for_start(coord).unwrap();
-                let mut shifts = neighbors.iter().map(|&neighbor| neighbor - coord).collect::<Vec<_>>();
+                let mut shifts = neighbors
+                    .iter()
+                    .map(|&neighbor| neighbor - coord)
+                    .collect::<Vec<_>>();
 
                 if shifts.contains(&Coord(-1, 0)) {
                     shifts.retain(|shift| shift != &Coord(-1, 0));
@@ -141,8 +146,8 @@ impl Graph {
                         Coord(1, 0) => '|',
                         Coord(0, 1) => 'L',
                         Coord(0, -1) => 'J',
-                        _ => panic!("invalid.")
-                    }
+                        _ => panic!("invalid."),
+                    };
                 }
 
                 if shifts.contains(&Coord(1, 0)) {
@@ -150,14 +155,20 @@ impl Graph {
                     return match shifts.first().unwrap() {
                         Coord(0, -1) => '7',
                         Coord(0, 1) => 'F',
-                        _ => panic!("invalid.")
-                    }
+                        _ => panic!("invalid."),
+                    };
                 }
                 '-'
-            }).unwrap();
+            })
+            .unwrap();
 
         let start = self.find_start().unwrap();
-        *self.0.get_mut(start.0 as usize).unwrap().get_mut(start.1 as usize).unwrap() = shape;
+        *self
+            .0
+            .get_mut(start.0 as usize)
+            .unwrap()
+            .get_mut(start.1 as usize)
+            .unwrap() = shape;
     }
 
     fn mark_non_loop_as_ground(&mut self, loop_indices: &HashMap<Coord, i32>) {
@@ -195,13 +206,12 @@ impl Graph {
         Some(adjacent)
     }
 
-    fn neighbors(&self, coord: Coord) -> Option<impl Iterator<Item=Coord> + '_> {
+    fn neighbors(&self, coord: Coord) -> Option<impl Iterator<Item = Coord> + '_> {
         let Some(character) = self.get(coord) else {
             return None;
         };
 
-        let shifts = 
-        match character {
+        let shifts = match character {
             '|' => vec![(-1, 0), (1, 0)],
             '-' => vec![(0, -1), (0, 1)],
             'L' => vec![(-1, 0), (0, 1)],
@@ -209,58 +219,82 @@ impl Graph {
             '7' => vec![(1, 0), (0, -1)],
             'F' => vec![(1, 0), (0, 1)],
             '.' => vec![],
-            _ => unreachable!("invalid character")
+            _ => unreachable!("invalid character"),
         }
         .into_iter()
         .map(|(row, col)| Coord(row, col));
 
         Some(
             shifts
-            .filter(move |shift| self.is_valid(coord + *shift))
-            .map(move |shift| shift + coord)
-            .filter(move |pos| self.get(*pos) != Some('.'))
+                .filter(move |shift| self.is_valid(coord + *shift))
+                .map(move |shift| shift + coord)
+                .filter(move |pos| self.get(*pos) != Some('.')),
         )
     }
     pub fn is_valid(&self, coord: Coord) -> bool {
-        0 <= coord.0 
-        && coord.0 <= (self.0.len() as isize)
-        && 0 <= coord.1
-        && coord.1 <= (self.0.get(0).unwrap().len() as isize)
+        0 <= coord.0
+            && coord.0 <= (self.0.len() as isize)
+            && 0 <= coord.1
+            && coord.1 <= (self.0.get(0).unwrap().len() as isize)
     }
 
-    fn mark_and_show_cells(&self, inside: &[Coord], outside: &[Coord], loop_indices: &HashMap<Coord, i32>) {
-        let mut graph: Vec<Vec<String>> = self.clone().0.into_iter().map(|row| row.into_iter().map(String::from).collect()).collect();
+    fn mark_and_show_cells(
+        &self,
+        inside: &[Coord],
+        outside: &[Coord],
+        loop_indices: &HashMap<Coord, i32>,
+    ) {
+        let mut graph: Vec<Vec<String>> = self
+            .clone()
+            .0
+            .into_iter()
+            .map(|row| row.into_iter().map(String::from).collect())
+            .collect();
         for coord in inside {
-            let v = graph.get_mut(coord.0 as usize).unwrap().get_mut(coord.1 as usize).unwrap();
+            let v = graph
+                .get_mut(coord.0 as usize)
+                .unwrap()
+                .get_mut(coord.1 as usize)
+                .unwrap();
             *v = "I".green().to_string();
         }
         for coord in outside {
-            let v = graph.get_mut(coord.0 as usize).unwrap().get_mut(coord.1 as usize).unwrap();
+            let v = graph
+                .get_mut(coord.0 as usize)
+                .unwrap()
+                .get_mut(coord.1 as usize)
+                .unwrap();
             *v = "O".red().to_string();
         }
         for coord in loop_indices.keys() {
-            let v = graph.get_mut(coord.0 as usize).unwrap().get_mut(coord.1 as usize).unwrap();
+            let v = graph
+                .get_mut(coord.0 as usize)
+                .unwrap()
+                .get_mut(coord.1 as usize)
+                .unwrap();
             *v = v.blue().to_string();
         }
 
         for line in graph.iter() {
-            let joined = line.iter().map(|c| c.to_string()).collect::<Vec<_>>().join("");
+            let joined = line
+                .iter()
+                .map(|c| c.to_string())
+                .collect::<Vec<_>>()
+                .join("");
             println!("{}", joined);
         }
         println!();
     }
 
     pub fn single_source_shortest_paths(&self, source: Coord) -> HashMap<Coord, i32> {
-
         let mut distances = HashMap::new();
         let mut queue = BinaryHeap::new();
         queue.push((0, source));
 
         while !queue.is_empty() {
-
             let (dist, current) = queue.pop().unwrap();
             distances.insert(current, -dist);
-        
+
             if let Some(neighbors) = self.neighbors(current).map(|it| it.collect::<Vec<_>>()) {
                 for neighbor in neighbors.iter() {
                     if !distances.contains_key(neighbor) {
@@ -277,7 +311,6 @@ impl Graph {
 pub fn parse_graph(data: &str) -> Graph {
     Graph(data.lines().map(|line| line.chars().collect()).collect())
 }
-
 
 pub fn solve_part1(data: &str) -> i32 {
     let mut graph = parse_graph(data);
@@ -318,26 +351,30 @@ pub fn solve_part2(data: &str, debug: bool) -> usize {
     // encountered. Since we started outside the loop, an odd number of wall crossings
     // imply we're inside the loop, and similarly, an even number of wall crossings imply
     // we're outside the loop again.
-    let sum =
-    remaining_indices
-    .iter()
-    .map(|&coord| {
-        if coord.1 == 0 {
-            outside.push(coord);
-            return 0;
-        }
-        // Count the north-facing wall crossings (i.e. '|' | 'J' | 'L') on the left of coord.
-        let left_strip = graph.0.get(coord.0 as usize).unwrap().iter().take(coord.1 as usize);
-        let north_facing = left_strip.filter(|&c | matches!(c, '|' | 'J' | 'L')).count();
-        if north_facing % 2 == 1 {
-            inside.push(coord);
-            1
-        } else {
-            outside.push(coord);
-            0
-        }
-    })
-    .sum();
+    let sum = remaining_indices
+        .iter()
+        .map(|&coord| {
+            if coord.1 == 0 {
+                outside.push(coord);
+                return 0;
+            }
+            // Count the north-facing wall crossings (i.e. '|' | 'J' | 'L') on the left of coord.
+            let left_strip = graph
+                .0
+                .get(coord.0 as usize)
+                .unwrap()
+                .iter()
+                .take(coord.1 as usize);
+            let north_facing = left_strip.filter(|&c| matches!(c, '|' | 'J' | 'L')).count();
+            if north_facing % 2 == 1 {
+                inside.push(coord);
+                1
+            } else {
+                outside.push(coord);
+                0
+            }
+        })
+        .sum();
 
     if debug {
         // arghh, print the inside/outside as color-coded for debug.
