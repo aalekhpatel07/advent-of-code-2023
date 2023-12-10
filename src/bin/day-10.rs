@@ -137,7 +137,7 @@ impl Graph {
 
                 if shifts.contains(&Coord(-1, 0)) {
                     shifts.retain(|shift| shift != &Coord(-1, 0));
-                    return match shifts.iter().next().unwrap() {
+                    return match shifts.first().unwrap() {
                         Coord(1, 0) => '|',
                         Coord(0, 1) => 'L',
                         Coord(0, -1) => 'J',
@@ -147,7 +147,7 @@ impl Graph {
 
                 if shifts.contains(&Coord(1, 0)) {
                     shifts.retain(|shift| shift != &Coord(1, 0));
-                    return match shifts.iter().next().unwrap() {
+                    return match shifts.first().unwrap() {
                         Coord(0, -1) => '7',
                         Coord(0, 1) => 'F',
                         _ => panic!("invalid.")
@@ -192,7 +192,7 @@ impl Graph {
         if let Some('-' | 'J' | '7') = self.get(Coord(coord.0, coord.1 + 1)) {
             adjacent.push(Coord(coord.0, coord.1 + 1));
         }
-        return Some(adjacent);
+        Some(adjacent)
     }
 
     fn neighbors(&self, coord: Coord) -> Option<impl Iterator<Item=Coord> + '_> {
@@ -244,10 +244,10 @@ impl Graph {
         }
 
         for line in graph.iter() {
-            let joined = line.into_iter().map(|c| c.to_string()).collect::<Vec<_>>().join("");
+            let joined = line.iter().map(|c| c.to_string()).collect::<Vec<_>>().join("");
             println!("{}", joined);
         }
-        println!("");
+        println!();
     }
 
     pub fn single_source_shortest_paths(&self, source: Coord) -> HashMap<Coord, i32> {
@@ -286,7 +286,7 @@ pub fn solve_part1(data: &str) -> i32 {
 
     let shortest_paths = graph.single_source_shortest_paths(source);
 
-    shortest_paths.iter().map(|(_, distance)| *distance).max().unwrap()
+    shortest_paths.values().copied().max().unwrap()
 }
 
 pub fn solve_part2(data: &str, debug: bool) -> usize {
