@@ -1,3 +1,6 @@
+use aoc_2023::submit::submit;
+
+
 pub type Sequence = std::collections::LinkedList<isize>;
 
 pub fn main() {
@@ -5,6 +8,8 @@ pub fn main() {
     let sequences: Vec<Sequence> = data.lines().map(parse_sequence).collect();
     println!("part 1: {}", solve_part1(&sequences));
     println!("part 2: {}", solve_part2(&sequences));
+    // assert!(submit(9, 1, &solve_part1(&sequences).to_string()).unwrap());
+    // assert!(submit(9, 2, &solve_part2(&sequences).to_string()).unwrap());
 }
 
 #[cfg(test)]
