@@ -20,7 +20,7 @@ pub async fn download_inputs(
 ) -> Result<bytes::Bytes, String> {
     let url = format!("https://adventofcode.com/2023/day/{day}/input");
 
-    let Ok(resp) = 
+    let Ok(resp) =
     client
     .get(&url)
     .header("Cookie", format!("session={session}"))
@@ -112,8 +112,10 @@ pub async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let root_dir = match opts.data_dir {
         Some(dir) => dir,
         None => {
-            let path =
-                std::path::Path::new(&std::env::var("CARGO_MANIFEST_DIR").unwrap_or(".".to_string())).join("data/");
+            let path = std::path::Path::new(
+                &std::env::var("CARGO_MANIFEST_DIR").unwrap_or(".".to_string()),
+            )
+            .join("data/");
             path
         }
     };

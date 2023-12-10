@@ -1,6 +1,3 @@
-
-
-
 pub type Sequence = std::collections::LinkedList<isize>;
 
 pub fn main() {
