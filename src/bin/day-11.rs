@@ -5,30 +5,27 @@ pub fn main() {
     println!("part 2: {}", solve_part2(data));
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Grid(Vec<Vec<char>>);
 pub type Coord = (isize, isize);
 
-
 impl Grid {
-
     pub fn new(data: &str) -> Self {
         Self(data.lines().map(|line| line.chars().collect()).collect())
     }
 
     fn empty_rows(&self) -> std::collections::HashSet<usize> {
         self.0
-        .iter()
-        .enumerate()
-        .filter_map(|(row_idx, row)| {
-            if row.iter().all(|&c| c == '.') {
-                Some(row_idx)
-            } else {
-                None
-            }
-        })
-        .collect()
+            .iter()
+            .enumerate()
+            .filter_map(|(row_idx, row)| {
+                if row.iter().all(|&c| c == '.') {
+                    Some(row_idx)
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 
     fn empty_columns(&self) -> std::collections::HashSet<usize> {
@@ -55,21 +52,14 @@ impl Grid {
     fn coordinates_of_galaxies(&self) -> Vec<Coord> {
         let mut coords = vec![];
 
-        self.0
-        .iter()
-        .enumerate()
-        .for_each(
-            |(row_idx, row)| 
-            row
-            .iter()
-            .enumerate()
-            .filter(
-                |(_, &char)| char == '#'
-            )
-            .for_each(|(col_idx, _)| {
-                coords.push((row_idx as isize, col_idx as isize));
-            })
-        );
+        self.0.iter().enumerate().for_each(|(row_idx, row)| {
+            row.iter()
+                .enumerate()
+                .filter(|(_, &char)| char == '#')
+                .for_each(|(col_idx, _)| {
+                    coords.push((row_idx as isize, col_idx as isize));
+                })
+        });
 
         coords
     }
@@ -83,7 +73,7 @@ impl Grid {
         let mut distances = vec![];
 
         for i in 0..coordinates.len() {
-            for j in i+1..coordinates.len() {
+            for j in i + 1..coordinates.len() {
                 let start = coordinates.get(i).unwrap();
                 let end = coordinates.get(j).unwrap();
 
@@ -93,17 +83,15 @@ impl Grid {
                 let start_col = start.1.min(end.1) as usize;
                 let end_col = start.1.max(end.1) as usize;
 
-                let empty_rows_crossed = 
-                empty_rows
-                .iter()
-                .filter(|&row_idx| start_row <= *row_idx && *row_idx <= end_row)
-                .count();
+                let empty_rows_crossed = empty_rows
+                    .iter()
+                    .filter(|&row_idx| start_row <= *row_idx && *row_idx <= end_row)
+                    .count();
 
-                let empty_columns_crossed = 
-                empty_columns
-                .iter()
-                .filter(|&col_idx| start_col <= *col_idx && *col_idx <= end_col)
-                .count();
+                let empty_columns_crossed = empty_columns
+                    .iter()
+                    .filter(|&col_idx| start_col <= *col_idx && *col_idx <= end_col)
+                    .count();
 
                 let mut distance = start.0.abs_diff(end.0) + start.1.abs_diff(end.1);
 
@@ -117,9 +105,7 @@ impl Grid {
         }
         distances
     }
-
 }
-
 
 pub fn solve_part1(data: &str) -> usize {
     let grid = Grid::new(data);
@@ -150,6 +136,5 @@ mod tests {
 
         assert_eq!(solve_part1(data), 374);
         assert_eq!(solve_part2(data), 82000210);
-
     }
 }
