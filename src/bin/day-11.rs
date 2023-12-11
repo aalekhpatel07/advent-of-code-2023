@@ -95,10 +95,11 @@ impl Grid {
 
                 let mut distance = start.0.abs_diff(end.0) + start.1.abs_diff(end.1);
 
-                // Number of empty columns traversed.
-                // + Number of empty rows traversed.
-                distance += (scale - 1) * empty_rows_crossed;
-                distance += (scale - 1) * empty_columns_crossed;
+                // Number of extra empty columns traversed.
+                // + Number of extra empty rows traversed.
+                // The original copy is already accounted for
+                // so count only the copies.
+                distance += (scale - 1) * (empty_rows_crossed + empty_columns_crossed);
 
                 distances.push(distance);
             }
