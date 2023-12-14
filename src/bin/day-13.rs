@@ -146,7 +146,7 @@ pub fn solve_part1(data: &str) -> usize {
 
 pub fn solve_part2(data: &str) -> usize {
     data.split("\n\n")
-        // .par_bridge()
+        .par_bridge()
         .map(|block| {
             let grid = Grid2D(
                 block
@@ -154,7 +154,6 @@ pub fn solve_part2(data: &str) -> usize {
                     .map(|row| row.chars().map(|c| (c as u8)).collect())
                     .collect(),
             );
-            // println!("{}", grid);
             grid
         })
         .map(|grid| grid.find_new_line_of_reflection().unwrap())
