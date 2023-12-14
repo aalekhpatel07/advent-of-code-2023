@@ -57,7 +57,7 @@ impl Grid2D {
             .all(|(left, right)| self.get_col(left as usize) == self.get_col(right as usize))
     }
 
-    pub fn find_horizontal_reflection(&self) -> impl Iterator<Item=Reflection> + '_ {
+    pub fn find_horizontal_reflection(&self) -> impl Iterator<Item = Reflection> + '_ {
         (1..(self.0.len() as isize))
             .filter(|&index| self.is_reflection_line_horizontal(index))
             .map(|v| Reflection::Horizontal(v as usize))
@@ -69,7 +69,7 @@ impl Grid2D {
             .collect()
     }
 
-    pub fn find_vertical_reflection(&self) -> impl Iterator<Item=Reflection> + '_ {
+    pub fn find_vertical_reflection(&self) -> impl Iterator<Item = Reflection> + '_ {
         (1..(self.0.get(0).unwrap().len() as isize))
             .filter(|&index| self.is_reflection_line_vertical(index))
             .map(|v| Reflection::Vertical(v as usize))
@@ -94,7 +94,7 @@ impl Grid2D {
 
     pub fn find_lines_of_reflection(&self) -> impl Iterator<Item = Reflection> + '_ {
         self.find_horizontal_reflection()
-        .chain(self.find_vertical_reflection())
+            .chain(self.find_vertical_reflection())
     }
 
     pub fn find_new_line_of_reflection(&self) -> Option<Reflection> {
@@ -109,7 +109,7 @@ impl Grid2D {
                 let maybe_corrected = self.correct_smudge(row_index, col_index);
                 let new_reflections: std::collections::HashSet<_> =
                     maybe_corrected.find_lines_of_reflection().collect();
-                
+
                 if let Some(new_reflection) = new_reflections.difference(&old_reflections).next() {
                     // If there's exactly one smudge that when fixed produces at least
                     // one new line of reflection, then we just found it!
@@ -210,14 +210,15 @@ mod tests {
 ...#..#";
 
         let grid = super::Grid2D(
-            data
-                .lines()
+            data.lines()
                 .map(|row| row.chars().map(|c| (c as u8)).collect())
-                .collect()
+                .collect(),
         );
 
-        assert_eq!(Some(crate::Reflection::Horizontal(8)), grid.find_new_line_of_reflection());
-
+        assert_eq!(
+            Some(crate::Reflection::Horizontal(8)),
+            grid.find_new_line_of_reflection()
+        );
     }
 
     #[test]
@@ -237,14 +238,21 @@ mod tests {
 .#.##.#
 ##..##.
 ...#..#";
-        
+
         let grid = super::Grid2D(
-            data
-                .lines()
+            data.lines()
                 .map(|row| row.chars().map(|c| (c as u8)).collect())
-                .collect()
+                .collect(),
         );
 
-        assert_eq!(vec![crate::Reflection::Horizontal(8), crate::Reflection::Horizontal(1)].into_iter().collect::<HashSet<_>>(), grid.find_lines_of_reflection().collect::<HashSet<_>>());
+        assert_eq!(
+            vec![
+                crate::Reflection::Horizontal(8),
+                crate::Reflection::Horizontal(1)
+            ]
+            .into_iter()
+            .collect::<HashSet<_>>(),
+            grid.find_lines_of_reflection().collect::<HashSet<_>>()
+        );
     }
 }
