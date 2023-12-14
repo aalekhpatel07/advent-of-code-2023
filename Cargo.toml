@@ -17,10 +17,11 @@ repository = "https://github.com/aalekhpatel07/advent-of-code-2023.git"
 lto = "fat"
 
 [features]
-default = ["day-12"]
+default = ["day-12", "day-13"]
 inputs = ["dep:bytes", "dep:chrono", "dep:clap", "dep:reqwest", "dep:tokio", "dep:dotenv"]
 submit = ["dep:reqwest"]
 day-12 = ["dep:rayon"]
+day-13 = ["dep:rayon"]
 
 
 [[bin]]
