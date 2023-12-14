@@ -57,9 +57,9 @@ impl Grid2D {
             .all(|(left, right)| self.get_col(left as usize) == self.get_col(right as usize))
     }
 
-    pub fn find_horizontal_reflection(&self) -> Option<Reflection> {
+    pub fn find_horizontal_reflection(&self) -> impl Iterator<Item=Reflection> + '_ {
         (1..(self.0.len() as isize))
-            .find(|&index| self.is_reflection_line_horizontal(index))
+            .filter(|&index| self.is_reflection_line_horizontal(index))
             .map(|v| Reflection::Horizontal(v as usize))
     }
 
@@ -69,9 +69,9 @@ impl Grid2D {
             .collect()
     }
 
-    pub fn find_vertical_reflection(&self) -> Option<Reflection> {
+    pub fn find_vertical_reflection(&self) -> impl Iterator<Item=Reflection> + '_ {
         (1..(self.0.get(0).unwrap().len() as isize))
-            .find(|&index| self.is_reflection_line_vertical(index))
+            .filter(|&index| self.is_reflection_line_vertical(index))
             .map(|v| Reflection::Vertical(v as usize))
     }
 
@@ -92,50 +92,32 @@ impl Grid2D {
         res
     }
 
-    pub fn find_lines_of_reflection(&self) -> impl Iterator<Item = Reflection> {
-        match (
-            self.find_horizontal_reflection(),
-            self.find_vertical_reflection(),
-        ) {
-            (None, None) => {
-                // panic!("No reflections found at all: \n{self}")
-                vec![].into_iter()
-            }
-            (Some(h), None) => vec![h].into_iter(),
-            (None, Some(v)) => vec![v].into_iter(),
-            (Some(h), Some(v)) => vec![h, v].into_iter(),
-        }
+    pub fn find_lines_of_reflection(&self) -> impl Iterator<Item = Reflection> + '_ {
+        self.find_horizontal_reflection()
+        .chain(self.find_vertical_reflection())
     }
 
     pub fn find_new_line_of_reflection(&self) -> Option<Reflection> {
-        let old_reflection: std::collections::HashSet<_> =
+        let old_reflections: std::collections::HashSet<_> =
             self.find_lines_of_reflection().collect();
-        for row_index in 0..self.0.len() {
-            for col_index in 0..self.0[0].len() {
+
+        let rows = self.0.len();
+        let cols = self.0[0].len();
+
+        for row_index in 0..rows {
+            for col_index in 0..cols {
                 let maybe_corrected = self.correct_smudge(row_index, col_index);
-                // println!("Testing grid (row: {}, col: {}):\n{}", row_index, col_index, maybe_corrected);
                 let new_reflections: std::collections::HashSet<_> =
                     maybe_corrected.find_lines_of_reflection().collect();
-                if let Some(new_reflection) = new_reflections.difference(&old_reflection).next() {
-                    // println!(
-                    //     "Found smudge: {:?}, and a new reflection: {} \t\t score: {}",
-                    //     (row_index, col_index),
-                    //     new_reflection,
-                    //     new_reflection.score()
-                    // );
-                    // println!(
-                    //     "new reflections: {:?}\nold reflections: {:?}",
-                    //     new_reflections.iter().collect::<Vec<_>>(),
-                    //     old_reflection.iter().collect::<Vec<_>>()
-                    // );
-                    // println!("Corrected grid:\n{}", maybe_corrected);
-                    // println!();
-
+                
+                if let Some(new_reflection) = new_reflections.difference(&old_reflections).next() {
+                    // If there's exactly one smudge that when fixed produces at least
+                    // one new line of reflection, then we just found it!
                     return Some(*new_reflection);
                 }
             }
         }
-        None
+        panic!("No smudges found!: {}", self);
     }
 }
 
@@ -164,7 +146,7 @@ pub fn solve_part1(data: &str) -> usize {
 
 pub fn solve_part2(data: &str) -> usize {
     data.split("\n\n")
-        .par_bridge()
+        // .par_bridge()
         .map(|block| {
             let grid = Grid2D(
                 block
@@ -175,13 +157,15 @@ pub fn solve_part2(data: &str) -> usize {
             // println!("{}", grid);
             grid
         })
-        .map(|grid| grid.find_new_line_of_reflection())
-        .map(|reflection| reflection.map(|r| r.score()).unwrap_or_default())
+        .map(|grid| grid.find_new_line_of_reflection().unwrap())
+        .map(|reflection| reflection.score())
         .sum()
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use super::{solve_part1, solve_part2};
 
     #[test]
@@ -204,5 +188,63 @@ mod tests {
 
         assert_eq!(solve_part1(data), 405);
         assert_eq!(solve_part2(data), 400);
+    }
+
+    #[test]
+
+    fn tricky_no_smudges() {
+        let data = r"...#..#
+...#..#
+##..##.
+.#.##.#
+..#..##
+#.#.##.
+#.#.###
+##.##..
+##.##..
+#.#.###
+..#.##.
+..#..##
+.#.##.#
+##..##.
+...#..#";
+
+        let grid = super::Grid2D(
+            data
+                .lines()
+                .map(|row| row.chars().map(|c| (c as u8)).collect())
+                .collect()
+        );
+
+        assert_eq!(Some(crate::Reflection::Horizontal(8)), grid.find_new_line_of_reflection());
+
+    }
+
+    #[test]
+    fn tricky_line_of_reflection() {
+        let data = r"...#..#
+...#..#
+##..##.
+.#.##.#
+..#..##
+#.#.##.
+#.#.###
+##.##..
+##.##..
+#.#.###
+#.#.##.
+..#..##
+.#.##.#
+##..##.
+...#..#";
+        
+        let grid = super::Grid2D(
+            data
+                .lines()
+                .map(|row| row.chars().map(|c| (c as u8)).collect())
+                .collect()
+        );
+
+        assert_eq!(vec![crate::Reflection::Horizontal(8), crate::Reflection::Horizontal(1)].into_iter().collect::<HashSet<_>>(), grid.find_lines_of_reflection().collect::<HashSet<_>>());
     }
 }

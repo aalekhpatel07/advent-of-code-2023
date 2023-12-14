@@ -35,6 +35,12 @@ path = "src/bin/day-12.rs"
 required-features = ["day-12"]
 
 
+[[bin]]
+name = "day-13"
+path = "src/bin/day-13.rs"
+required-features = ["day-13"]
+
+
 [dependencies]
 bytes = { version = "1.5.0", optional = true }
 chrono = { version = "0.4.31", optional = true }
