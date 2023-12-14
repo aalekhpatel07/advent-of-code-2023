@@ -117,19 +117,19 @@ impl Grid2D {
                 let new_reflections: std::collections::HashSet<_> =
                     maybe_corrected.find_lines_of_reflection().collect();
                 if let Some(new_reflection) = new_reflections.difference(&old_reflection).next() {
-                    println!(
-                        "Found smudge: {:?}, and a new reflection: {} \t\t score: {}",
-                        (row_index, col_index),
-                        new_reflection,
-                        new_reflection.score()
-                    );
-                    println!(
-                        "new reflections: {:?}\nold reflections: {:?}",
-                        new_reflections.iter().collect::<Vec<_>>(),
-                        old_reflection.iter().collect::<Vec<_>>()
-                    );
-                    println!("Corrected grid:\n{}", maybe_corrected);
-                    println!();
+                    // println!(
+                    //     "Found smudge: {:?}, and a new reflection: {} \t\t score: {}",
+                    //     (row_index, col_index),
+                    //     new_reflection,
+                    //     new_reflection.score()
+                    // );
+                    // println!(
+                    //     "new reflections: {:?}\nold reflections: {:?}",
+                    //     new_reflections.iter().collect::<Vec<_>>(),
+                    //     old_reflection.iter().collect::<Vec<_>>()
+                    // );
+                    // println!("Corrected grid:\n{}", maybe_corrected);
+                    // println!();
 
                     return Some(*new_reflection);
                 }
@@ -142,7 +142,7 @@ impl Grid2D {
 pub fn main() {
     let data = include_str!("../../data/13.in");
 
-    // println!("part 1: {}", solve_part1(data));
+    println!("part 1: {}", solve_part1(data));
     println!("part 2: {}", solve_part2(data));
 }
 
@@ -164,7 +164,7 @@ pub fn solve_part1(data: &str) -> usize {
 
 pub fn solve_part2(data: &str) -> usize {
     data.split("\n\n")
-        // .par_bridge()
+        .par_bridge()
         .map(|block| {
             let grid = Grid2D(
                 block
