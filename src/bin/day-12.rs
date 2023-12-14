@@ -14,10 +14,10 @@ pub fn solve_part1(data: &str) -> usize {
     .lines()
     .par_bridge()
     .map(|line|{
-        let (seq, groups) = line.split_once(" ").unwrap();
+        let (seq, groups) = line.split_once(' ').unwrap();
         Arrangement {
             seq: seq.chars().map(|c| c as u8).collect(),
-            groups: groups.split(",").map(|s| s.parse().unwrap()).collect(),
+            groups: groups.split(',').map(|s| s.parse().unwrap()).collect(),
         }
     })
     .map(|arrangement| arrangement.count_by_skipping_contiguous_blocks())
@@ -28,14 +28,14 @@ pub fn solve_part2(data: &str) -> usize {
     .lines()
     .par_bridge()
     .map(|line|{
-        let (seq, groups) = line.split_once(" ").unwrap();
+        let (seq, groups) = line.split_once(' ').unwrap();
 
         let new_seq = vec![seq.to_string(); 5].join("?");
         let new_groups = vec![groups.to_string(); 5].join(",");
 
         Arrangement {
             seq: new_seq.chars().map(|c| c as u8).collect(),
-            groups: new_groups.split(",").map(|s| s.parse().unwrap()).collect(),
+            groups: new_groups.split(',').map(|s| s.parse().unwrap()).collect(),
         }
     })
     .map(|arrangement| { 
@@ -115,7 +115,7 @@ impl Arrangement {
                 // The spring following this block is necessarily a '.' or a '?' but 
                 // even if it is the wildcard, it'll still have to be treated as a working spring
                 // because we're jumping all the way to the start of the next block of broken springs, if any.
-                if damaged_springs_in_this_block + 1 <= springs_left {
+                if damaged_springs_in_this_block < springs_left {
                     result += Self::count_valid_arrangments(&arrangement[damaged_springs_in_this_block + 1..], &contiguous_blocks[1..], cache);
                 }
                 // Ending this block brings us to the end of the spring arrangement.
