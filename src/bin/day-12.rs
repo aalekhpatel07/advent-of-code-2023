@@ -104,11 +104,11 @@ impl Arrangement {
             if have_enough_springs && block_contains_only_damaged_strings // since the broken spring block is contiguous.
             && (
                 // Either exactly these many springs left, all of which are broken.
-                (damaged_springs_in_this_block == springs_left) 
+                (damaged_springs_in_this_block == springs_left)
 
                 // or the spring immediately following this block isn't a broken spring, 
                 // as otherwise it'd have to be a part of this block itself.
-                || arrangement[damaged_springs_in_this_block] != b'#' 
+                || arrangement[damaged_springs_in_this_block] != b'#'
             ) {
                 // The spring following this block is necessarily a '.' or a '?' but
                 // even if it is the wildcard, it'll still have to be treated as a working spring
