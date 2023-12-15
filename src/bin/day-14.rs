@@ -39,9 +39,9 @@ impl Grid2D {
     fn shift_column_upward(&mut self, col_index: usize) {
 
         self.get_column(col_index);
-        let mut column = vec![Rock::Space; self.0.len()];
+        let _column = vec![Rock::Space; self.0.len()];
 
-        let mut next_free_spot = 0;
+        let _next_free_spot = 0;
 
         
 
@@ -101,7 +101,7 @@ pub fn main() {
     println!("part 2: {}", solve_part2(data));
 }
 
-pub fn solve_part1(data: &str) -> usize {
+pub fn solve_part1(_data: &str) -> usize {
 
 
     // data.split("\n\n")
@@ -121,7 +121,7 @@ pub fn solve_part1(data: &str) -> usize {
 }
 
 
-pub fn solve_part2(data: &str) -> usize {
+pub fn solve_part2(_data: &str) -> usize {
     0
 //     data.split("\n\n")
 //         .par_bridge()
@@ -141,9 +141,9 @@ pub fn solve_part2(data: &str) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
+    
 
-    use super::{solve_part1, solve_part2};
+    use super::{solve_part1};
 
     #[test]
     fn smol() {
@@ -158,6 +158,6 @@ O.#..O.#.#
 #....###..
 #OO..#....";
 
-        solve_part1(&data);
+        solve_part1(data);
     }
 }

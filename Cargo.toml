@@ -23,6 +23,7 @@ submit = ["dep:reqwest"]
 day-12 = ["dep:rayon"]
 day-13 = ["dep:rayon"]
 day-14 = []
+day-15 = []
 
 
 [[bin]]
@@ -45,6 +46,12 @@ required-features = ["day-13"]
 name = "day-14"
 path = "src/bin/day-14.rs"
 required-features = ["day-14"]
+
+
+[[bin]]
+name = "day-15"
+path = "src/bin/day-15.rs"
+required-features = ["day-15"]
 
 [dependencies]
 bytes = { version = "1.5.0", optional = true }

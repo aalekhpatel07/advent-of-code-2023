@@ -19,7 +19,7 @@ fn solve_part2(data: &str) -> usize {
     let pattern_re: Regex = Regex::new(r"(\w+)([-=])(\d)?").unwrap();
 
     data
-    .split(",")
+    .split(',')
     .for_each(|ins| {
         let caps = pattern_re.captures(ins).unwrap();
 
@@ -61,8 +61,8 @@ fn test_sample() {
 
 fn solve_part1(data: &str) -> usize {
     data
-    .split(",")
-    .map(|s| part1_hash(s))
+    .split(',')
+    .map(part1_hash)
     .sum()
 }
 
