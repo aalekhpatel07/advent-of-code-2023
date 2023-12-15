@@ -58,17 +58,8 @@ pub enum Direction {
     South
 }
 
-
-impl Grid2D {
-    pub fn parse_str(data: &str) -> Self {
-        Grid2D(
-            data.lines()
-                .map(|line| line.chars().map(|value| value.into()).collect())
-                .collect(),
-        )
-    }
-
-    pub fn to_string(&self) -> String {
+impl ToString for Grid2D {
+    fn to_string(&self) -> String {
         self.0
         .iter()
         .map(|row| {
@@ -79,6 +70,16 @@ impl Grid2D {
         })
         .collect::<Vec<_>>()
         .join("\n")
+    }
+}
+
+impl Grid2D {
+    pub fn parse_str(data: &str) -> Self {
+        Grid2D(
+            data.lines()
+                .map(|line| line.chars().map(|value| value.into()).collect())
+                .collect(),
+        )
     }
 
     pub fn get_number_of_columns(&self) -> usize {

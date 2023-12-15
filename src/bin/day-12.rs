@@ -27,8 +27,8 @@ pub fn solve_part2(data: &str) -> usize {
         .map(|line| {
             let (seq, groups) = line.split_once(' ').unwrap();
 
-            let new_seq = vec![seq.to_string(); 5].join("?");
-            let new_groups = vec![groups.to_string(); 5].join(",");
+            let new_seq = [seq; 5].join("?");
+            let new_groups = [groups; 5].join(",");
 
             Arrangement {
                 seq: new_seq.chars().map(|c| c as u8).collect(),
