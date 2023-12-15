@@ -29,7 +29,9 @@ pub mod part2 {
         let mut first_digit = None;
         let mut last_digit = None;
 
-        let digits = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+        let digits = [
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+        ];
 
         for (idx, char) in s.chars().enumerate() {
             // Either a digit

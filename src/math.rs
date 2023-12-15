@@ -28,27 +28,26 @@ pub fn lcm_many<'a>(numbers: impl Iterator<Item = &'a usize>) -> Option<usize> {
 /// Given an initial state of a finite state machine,
 /// and a transition function between states, detect
 /// the smallest cycle in the state chain. If found,
-/// return the number of state transitions required to 
+/// return the number of state transitions required to
 /// get to the cycle, along with the length of the cycle.
-/// 
+///
 /// Optionally, we can also limit the search for cycle
-/// to a maximum number of steps to guarantee eventual 
+/// to a maximum number of steps to guarantee eventual
 /// termination.
-/// 
+///
 /// A cycle may look like:
 /// ```s0, s1, s2, ..., s5, (s6, s7, s8)*```
-/// 
+///
 /// In that case, this function would return ```(6, 3)```
 pub fn detect_cycle<S, F>(
     initial_state: &S,
     transition_fn: F,
-    max_steps: Option<usize>
+    max_steps: Option<usize>,
 ) -> Option<(usize, usize)>
 where
     F: Fn(&S) -> S,
-    S: Clone + std::hash::Hash + PartialEq + Eq
+    S: Clone + std::hash::Hash + PartialEq + Eq,
 {
-
     let mut step = 0;
     let mut first_occurrences = std::collections::HashMap::<S, usize>::new();
 

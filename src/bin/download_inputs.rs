@@ -20,15 +20,13 @@ pub async fn download_inputs(
 ) -> Result<bytes::Bytes, String> {
     let url = format!("https://adventofcode.com/2023/day/{day}/input");
 
-    let Ok(resp) =
-    client
-    .get(&url)
-    .header("Cookie", format!("session={session}"))
-    .send()
-    .await else {
-        return Err(
-            format!("failed to download input for day: {}", day)
-        );
+    let Ok(resp) = client
+        .get(&url)
+        .header("Cookie", format!("session={session}"))
+        .send()
+        .await
+    else {
+        return Err(format!("failed to download input for day: {}", day));
     };
 
     if resp.status() != 200 {
