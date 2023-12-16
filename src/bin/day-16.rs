@@ -87,23 +87,19 @@ impl Mirrors {
     pub fn next_coordinate(&self, source: Point, direction: Direction) -> Option<Point> {
         let (row, col) = (source.0, source.1);
         match direction {
-            Direction::East if col < self.columns as isize - 1 => {
-                Some((row, col + 1))
-            }
-            Direction::North if row > 0 => {
-                Some((row - 1, col))
-            }
-            Direction::West if col > 0 => {
-                Some((row, col - 1))
-            }
-            Direction::South if row < self.rows as isize - 1 => {
-                Some((row + 1, col))
-            },
-            _ => None
+            Direction::East if col < self.columns as isize - 1 => Some((row, col + 1)),
+            Direction::North if row > 0 => Some((row - 1, col)),
+            Direction::West if col > 0 => Some((row, col - 1)),
+            Direction::South if row < self.rows as isize - 1 => Some((row + 1, col)),
+            _ => None,
         }
     }
 
-    pub fn step(&self, outgoing: Direction, coordinate: Point) -> impl Iterator<Item=(Point, Direction)> {
+    pub fn step(
+        &self,
+        outgoing: Direction,
+        coordinate: Point,
+    ) -> impl Iterator<Item = (Point, Direction)> {
         let char = *self
             .inner
             .get(&(coordinate.0, coordinate.1))
@@ -176,14 +172,13 @@ impl Mirrors {
             tiles_seen.insert(source); // track the distinct tiles that were covered.
             seen.insert((source, direction)); // track which direction the ray was facing when it got here.
             queue.extend(
-            self.step(direction, source)
-                .filter(|(src, dir)| !seen.contains(&(*src, *dir))),
+                self.step(direction, source)
+                    .filter(|(src, dir)| !seen.contains(&(*src, *dir))),
             )
         }
         tiles_seen
     }
 }
-
 
 #[cfg(test)]
 mod tests {
