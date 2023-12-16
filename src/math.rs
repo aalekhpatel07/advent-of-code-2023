@@ -63,7 +63,7 @@ where
         }
 
         if first_occurrences.contains_key(&state) {
-            repeating_key = Some((state.clone(), step));
+            repeating_key = Some((state, step));
             break;
         }
         first_occurrences.insert(state.clone(), step);

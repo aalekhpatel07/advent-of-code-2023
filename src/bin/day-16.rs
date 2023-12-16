@@ -25,7 +25,7 @@ impl std::fmt::Display for Mirrors {
             for col_idx in 0..self.columns {
                 _ = write!(f, "{}", *self.inner.get(&(row_idx as isize, col_idx as isize)).unwrap_or(&b'.') as char);
             }
-            _ = write!(f, "\n");
+            _ = writeln!(f);
         }
         Ok(())
     }
