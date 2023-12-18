@@ -1,8 +1,7 @@
-use aoc_2023::data_structures::{SparseGrid2D, NeighborhoodShape, Direction};
+use aoc_2023::data_structures::{Direction, NeighborhoodShape, SparseGrid2D};
 use rayon::prelude::*;
 
 use pathfinding::prelude::astar;
-
 
 pub fn main() {
     let data = include_str!("../../data/17.in");
@@ -14,51 +13,75 @@ pub fn solve_part1(data: &str) -> isize {
     let grid = data.parse::<SparseGrid2D<HeatLoss>>().unwrap();
 
     let start_node = NodeKey::new((0, 0), None, 0);
-    let end_node = NodeKey::new((grid.rows as isize - 1, grid.columns as isize - 1), Some(Direction::Right), 0);
+    let end_node = NodeKey::new(
+        (grid.rows as isize - 1, grid.columns as isize - 1),
+        Some(Direction::Right),
+        0,
+    );
 
     Direction::all_from_shape(NeighborhoodShape::Plus)
-    .into_par_iter()
-    .map(|direction| {
-        astar(
-            &start_node, 
-            |node_key| grid.max_consecutive_run_neighbors(*node_key).into_iter().map(|key| (key, grid.at(key.coord).map(|h| h.0).unwrap())).collect::<Vec<_>>(),
-            |node_key| node_key.l1_distance(end_node), 
-            |node_key| node_key.coord == end_node.coord && node_key.direction == Some(direction)
-        )
-        .map(|(_, dist)| dist as isize)
-        .unwrap_or(isize::MAX)
-    })
-    .min()
-    .unwrap()
+        .into_par_iter()
+        .map(|direction| {
+            astar(
+                &start_node,
+                |node_key| {
+                    grid.max_consecutive_run_neighbors(*node_key)
+                        .into_iter()
+                        .map(|key| (key, grid.at(key.coord).map(|h| h.0).unwrap()))
+                        .collect::<Vec<_>>()
+                },
+                |node_key| node_key.l1_distance(end_node),
+                |node_key| {
+                    node_key.coord == end_node.coord && node_key.direction == Some(direction)
+                },
+            )
+            .map(|(_, dist)| dist as isize)
+            .unwrap_or(isize::MAX)
+        })
+        .min()
+        .unwrap()
 }
 
 pub fn solve_part2(data: &str) -> isize {
     let grid = data.parse::<SparseGrid2D<HeatLoss>>().unwrap();
 
     let start_node = NodeKey::new((0, 0), None, 0);
-    let end_node = NodeKey::new((grid.rows as isize - 1, grid.columns as isize - 1), Some(Direction::Right), 0);
+    let end_node = NodeKey::new(
+        (grid.rows as isize - 1, grid.columns as isize - 1),
+        Some(Direction::Right),
+        0,
+    );
 
     Direction::all_from_shape(NeighborhoodShape::Plus)
-    .into_par_iter()
-    .map(|direction| {
-        astar(
-            &start_node, 
-            |node_key| grid.min_max_consecutive_run_neighbors(*node_key).into_iter().map(|key| (key, grid.at(key.coord).map(|h| h.0).unwrap())).collect::<Vec<_>>(),
-            |node_key| node_key.l1_distance(end_node), 
-            |node_key| node_key.coord == end_node.coord && node_key.direction == Some(direction) && node_key.run_length >= 4
-        )
-        .map(|(_, dist)| dist as isize)
-        .unwrap_or(isize::MAX)
-    })
-    .min()
-    .unwrap()
+        .into_par_iter()
+        .map(|direction| {
+            astar(
+                &start_node,
+                |node_key| {
+                    grid.min_max_consecutive_run_neighbors(*node_key)
+                        .into_iter()
+                        .map(|key| (key, grid.at(key.coord).map(|h| h.0).unwrap()))
+                        .collect::<Vec<_>>()
+                },
+                |node_key| node_key.l1_distance(end_node),
+                |node_key| {
+                    node_key.coord == end_node.coord
+                        && node_key.direction == Some(direction)
+                        && node_key.run_length >= 4
+                },
+            )
+            .map(|(_, dist)| dist as isize)
+            .unwrap_or(isize::MAX)
+        })
+        .min()
+        .unwrap()
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NodeKey {
     coord: (isize, isize),
     direction: Option<Direction>,
-    run_length: usize
+    run_length: usize,
 }
 
 impl NodeKey {
@@ -66,7 +89,7 @@ impl NodeKey {
         NodeKey {
             coord,
             direction,
-            run_length
+            run_length,
         }
     }
     pub fn l1_distance(&self, other: NodeKey) -> usize {
@@ -79,17 +102,16 @@ pub trait MaxConsecutiveRunNeighbors {
     fn min_max_consecutive_run_neighbors(&self, key: NodeKey) -> Vec<NodeKey>;
 }
 
-
 impl MaxConsecutiveRunNeighbors for SparseGrid2D<HeatLoss> {
     fn max_consecutive_run_neighbors(&self, key: NodeKey) -> Vec<NodeKey> {
         let NodeKey {
             coord,
             direction,
-            run_length
+            run_length,
         } = key;
 
-        let Some(direction) = direction else { 
-            return 
+        let Some(direction) = direction else {
+            return
                 self
                 .neighbors((coord.0 as usize, coord.1 as usize), NeighborhoodShape::Plus)
                 .map(|(coord, direction, _)| {
@@ -104,20 +126,30 @@ impl MaxConsecutiveRunNeighbors for SparseGrid2D<HeatLoss> {
 
         let mut result = vec![];
 
-        for (target_coord, target_direction, _) in self.neighbors((coord.0 as usize, coord.1 as usize), NeighborhoodShape::Plus) {
+        for (target_coord, target_direction, _) in self.neighbors(
+            (coord.0 as usize, coord.1 as usize),
+            NeighborhoodShape::Plus,
+        ) {
             if target_direction == direction {
                 if run_length >= 3 {
                     continue;
                 } else {
-                    result.push(NodeKey { coord: (target_coord.0 as isize, target_coord.1 as isize), direction: Some(target_direction), run_length: run_length + 1 });
+                    result.push(NodeKey {
+                        coord: (target_coord.0 as isize, target_coord.1 as isize),
+                        direction: Some(target_direction),
+                        run_length: run_length + 1,
+                    });
                 }
-            }
-            else {
+            } else {
                 // can't go back.
                 if target_direction == direction.opposite().unwrap() {
                     continue;
                 }
-                result.push(NodeKey { coord: (target_coord.0 as isize, target_coord.1 as isize), direction: Some(target_direction), run_length: 1 });
+                result.push(NodeKey {
+                    coord: (target_coord.0 as isize, target_coord.1 as isize),
+                    direction: Some(target_direction),
+                    run_length: 1,
+                });
             }
         }
 
@@ -125,15 +157,14 @@ impl MaxConsecutiveRunNeighbors for SparseGrid2D<HeatLoss> {
     }
 
     fn min_max_consecutive_run_neighbors(&self, key: NodeKey) -> Vec<NodeKey> {
-
         let NodeKey {
             coord,
             direction,
-            run_length
+            run_length,
         } = key;
 
-        let Some(direction) = direction else { 
-            return 
+        let Some(direction) = direction else {
+            return
                 self
                 .neighbors((coord.0 as usize, coord.1 as usize), NeighborhoodShape::Plus)
                 .map(|(coord, direction, _)| {
@@ -148,18 +179,19 @@ impl MaxConsecutiveRunNeighbors for SparseGrid2D<HeatLoss> {
 
         let mut result = vec![];
 
-        for (target_coord, target_direction, _) in self.neighbors((coord.0 as usize, coord.1 as usize), NeighborhoodShape::Plus) {
+        for (target_coord, target_direction, _) in self.neighbors(
+            (coord.0 as usize, coord.1 as usize),
+            NeighborhoodShape::Plus,
+        ) {
             if target_direction == direction {
                 // going in the same direction,
                 // must keep going if less than 4 blocks travelled.
                 if run_length < 4 {
-                    result.push(
-                        NodeKey { 
-                            coord: (target_coord.0 as isize, target_coord.1 as isize), 
-                            direction: Some(target_direction), 
-                            run_length: run_length + 1
-                        }
-                    );
+                    result.push(NodeKey {
+                        coord: (target_coord.0 as isize, target_coord.1 as isize),
+                        direction: Some(target_direction),
+                        run_length: run_length + 1,
+                    });
                     continue;
                 }
                 // cannot go further if max blocks traversed.
@@ -167,34 +199,27 @@ impl MaxConsecutiveRunNeighbors for SparseGrid2D<HeatLoss> {
                     continue;
                 }
 
-                result.push(
-                    NodeKey { 
-                        coord: (target_coord.0 as isize, target_coord.1 as isize), 
-                        direction: Some(target_direction), 
-                        run_length: run_length + 1
-                    }
-                );
-            }
-            else {
+                result.push(NodeKey {
+                    coord: (target_coord.0 as isize, target_coord.1 as isize),
+                    direction: Some(target_direction),
+                    run_length: run_length + 1,
+                });
+            } else {
                 // can't go back or turn.
                 if run_length < 4 || target_direction == direction.opposite().unwrap() {
                     continue;
                 }
-                result.push(
-                    NodeKey { 
-                        coord: (target_coord.0 as isize, target_coord.1 as isize), 
-                        direction: Some(target_direction), 
-                        run_length: 1
-                    }
-                );
+                result.push(NodeKey {
+                    coord: (target_coord.0 as isize, target_coord.1 as isize),
+                    direction: Some(target_direction),
+                    run_length: 1,
+                });
             }
         }
 
         result
     }
 }
-
-
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct HeatLoss(usize);
@@ -204,7 +229,7 @@ impl TryFrom<char> for HeatLoss {
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value.is_ascii_digit() {
             true => Ok(Self(value.to_digit(10).unwrap() as usize)),
-            false => Err("found non-digit".to_string())
+            false => Err("found non-digit".to_string()),
         }
     }
 }
