@@ -9,6 +9,58 @@ pub enum Grid2DParseError {
     BadData
 }
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Direction {
+    Up,
+    Left,
+    Right,
+    Down,
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight
+}
+
+impl Direction {
+    pub fn all_from_shape(shape: NeighborhoodShape) -> Vec<Direction> {
+        match shape {
+            NeighborhoodShape::Box => vec![Direction::Left, Direction::Right, Direction::Up, Direction::Down, Direction::TopLeft, Direction::TopRight, Direction::BottomLeft, Direction::BottomRight],
+            NeighborhoodShape::Plus => vec![Direction::Left, Direction::Right, Direction::Up, Direction::Down]
+        }
+    }
+
+    pub fn opposite(&self) -> Option<Direction> {
+        match self {
+            Direction::Left => Some(Direction::Right),
+            Direction::Right => Some(Direction::Left),
+            Direction::Up => Some(Direction::Down),
+            Direction::Down => Some(Direction::Up),
+            Direction::TopLeft => Some(Direction::BottomRight),
+            Direction::TopRight => Some(Direction::BottomLeft),
+            Direction::BottomLeft => Some(Direction::TopRight),
+            Direction::BottomRight => Some(Direction::TopLeft)
+        }
+    }
+}
+
+
+impl From<Direction> for (isize, isize) {
+    fn from(value: Direction) -> Self {
+        match value {
+            Direction::Up => (-1, 0),
+            Direction::Left => (0, -1),
+            Direction::Right => (0, 1),
+            Direction::Down => (1, 0),
+            Direction::TopLeft => (-1, -1),
+            Direction::TopRight => (1, -1),
+            Direction::BottomLeft => (-1, 1),
+            Direction::BottomRight => (1, 1)
+        }
+    }
+}
+
+
 #[derive(Debug, Clone)]
 pub struct SparseGrid2D<T> {
     inner: HashMap<Point, T>,
@@ -42,8 +94,7 @@ where
 pub enum NeighborhoodShape {
     #[default]
     Plus,
-    Box,
-    Other(Vec<(isize, isize)>)
+    Box
 }
 
 impl<T> std::fmt::Display for SparseGrid2D<T> 
@@ -125,34 +176,13 @@ impl<T> SparseGrid2D<T>
         self.inner.get(&(coordinate.0 as usize, coordinate.1 as usize))
     }
 
-    pub fn neighbors(&self, coordinate: Point, shape: NeighborhoodShape) -> impl Iterator<Item=(Point, Option<&T>)> {
-        let directions_to_check = match shape {
-            NeighborhoodShape::Box => {
-                vec![
-                    (-1, -1),
-                    (-1, 0),
-                    (-1, 1),
-                    (0, -1),
-                    (0, 1),
-                    (1, -1),
-                    (1, 0),
-                    (1, 1)
-                ]
-            },
-            NeighborhoodShape::Plus => {
-                vec![
-                    (-1, 0),
-                    (0, -1),
-                    (0, 1),
-                    (1, 0),
-                ]
-            },
-            NeighborhoodShape::Other(other) => other
-        };
+    pub fn neighbors(&self, coordinate: Point, shape: NeighborhoodShape) -> impl Iterator<Item=(Point, Direction, Option<&T>)> {
+        let directions_to_check = Direction::all_from_shape(shape);
 
         directions_to_check
         .into_iter()
-        .filter_map(move |(delta_row, delta_column)| {
+        .filter_map(move |direction| {
+            let (delta_row, delta_column) = direction.into();
             let target_coordinate = (coordinate.0 as isize + delta_row, coordinate.1 as isize + delta_column);
             if target_coordinate.0 < 0 || target_coordinate.0 >= self.rows as isize {
                 return None;
@@ -162,6 +192,7 @@ impl<T> SparseGrid2D<T>
             }
             Some((
                 (target_coordinate.0 as usize, target_coordinate.1 as usize),
+                direction,
                 self.inner.get(&(target_coordinate.0 as usize, target_coordinate.1 as usize))
             ))
         })
