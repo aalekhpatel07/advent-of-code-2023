@@ -1,6 +1,6 @@
 use aoc_2023::data_structures::{SparseGrid2D, NeighborhoodShape, Direction};
 use rayon::prelude::*;
-use std::cmp::Ordering;
+
 use pathfinding::prelude::astar;
 
 
@@ -54,45 +54,12 @@ pub fn solve_part2(data: &str) -> isize {
     .unwrap()
 }
 
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord)]
-pub struct Cost(isize);
-
-impl Cost {
-    pub fn value(&self) -> usize {
-        -self.0 as usize
-    }
-}
-
-impl PartialOrd<Cost> for Cost {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        (-self.0).partial_cmp(&(-other.0))
-    }
-}
-
-impl std::ops::Add for Cost {
-    type Output = Self;
-    fn add(self, rhs: Self) -> Self::Output {
-        Self(self.0 + rhs.0)
-    }
-}
-
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct NodeKey {
     coord: (isize, isize),
     direction: Option<Direction>,
     run_length: usize
 }
-
-impl std::hash::Hash for NodeKey {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.coord.hash(state);
-        self.direction.hash(state);
-        self.run_length.hash(state);
-    }
-}
-
 
 impl NodeKey {
     pub fn new(coord: (isize, isize), direction: Option<Direction>, run_length: usize) -> NodeKey {
@@ -237,7 +204,7 @@ impl TryFrom<char> for HeatLoss {
     fn try_from(value: char) -> Result<Self, Self::Error> {
         match value.is_ascii_digit() {
             true => Ok(Self(value.to_digit(10).unwrap() as usize)),
-            false => Err(format!("found non-digit"))
+            false => Err("found non-digit".to_string())
         }
     }
 }

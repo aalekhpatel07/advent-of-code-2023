@@ -108,10 +108,10 @@ where
                 if let Some(value) = self.inner.get(&(row_idx, col_idx)) {
                     _ = write!(f, "{}", value);
                 } else {
-                    _ = write!(f, "{}", ".")
+                    _ = write!(f, ".")
                 }
             }
-            _ = writeln!(f, "");
+            _ = writeln!(f);
         }
         Ok(())
     }
