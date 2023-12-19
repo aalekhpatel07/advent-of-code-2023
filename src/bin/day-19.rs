@@ -1,5 +1,5 @@
-use std::{collections::{LinkedList, HashMap}, str::FromStr};
-use indicatif::ProgressBar;
+use std::{collections::{HashMap}, str::FromStr};
+
 use lazy_static::lazy_static;
 use rayon::prelude::*;
 use indicatif::ParallelProgressIterator;
@@ -58,7 +58,7 @@ pub fn solve_part1(data: &str) -> usize {
     for (rating_idx, rating) in game.ratings.iter().enumerate() {
         let mut workflow = game.workflows.get("in").unwrap().clone();
         loop {
-            let (accepted, maybe_next_workflow) = workflow.process(&rating);
+            let (accepted, maybe_next_workflow) = workflow.process(rating);
             let Some(next_workflow_id) = maybe_next_workflow else {
                 if accepted {
                     accepted_ratings.insert(rating_idx);
@@ -115,16 +115,12 @@ pub struct Ratings {
 impl Ratings {
     pub fn distinct_combinations() -> impl Iterator<Item=Self> {
         (1..=4000)
-        .into_iter()
         .flat_map(|x| 
             (1..=4000)
-            .into_iter()
             .flat_map(move |m| {
                 (1..=4000)
-                .into_iter()
                 .flat_map(move |a| {
                     (1..=4000)
-                    .into_iter()
                     .map(move |s| {
                         Ratings { inner: HashMap::from_iter(vec![(Part::X, x), (Part::M, m), (Part::A, a), (Part::S, s)])}
                     })
@@ -150,9 +146,9 @@ impl FromStr for Ratings {
             .name("ratings")
             .unwrap()
             .as_str()
-            .split(",")
+            .split(',')
             .map(|rating_str| {
-                let (part_str, value) = rating_str.split_once("=").unwrap();
+                let (part_str, value) = rating_str.split_once('=').unwrap();
                 let value = value.parse::<usize>().unwrap();
                 let part: Part = part_str.chars().next().unwrap().into();
                 (part, value)
@@ -183,7 +179,7 @@ impl std::str::FromStr for Workflow {
 
         let rules = 
             rules
-            .split(",")
+            .split(',')
             .map(Rule::from_str)
             .collect::<Result<Vec<_>, String>>()?;
 
@@ -294,7 +290,7 @@ impl std::str::FromStr for Rule {
 
         match RULE_CONDITIONAL_RE.captures(s) {
             None => {
-                return Ok(match s {
+                Ok(match s {
                     "A" => Rule::Conclude { accept: true },
                     "R" => Rule::Conclude { accept: false },
                     _ => Rule::Jump { target: s.to_string() }
@@ -306,7 +302,7 @@ impl std::str::FromStr for Rule {
                 let threshold = capture.name("threshold").unwrap().as_str().parse::<usize>().unwrap();
                 let target = capture.name("target").unwrap().as_str();
 
-                return match (conditional, target) {
+                match (conditional, target) {
                     ('<', "A" | "R") => {
                         Ok(Rule::ConcludeIfLessThan { part, accept: target == "A", value: threshold })
                     },
