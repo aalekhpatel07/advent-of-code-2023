@@ -1,7 +1,6 @@
 use aoc_2023::data_structures::LateralPolygon;
 use regex::Regex;
 
-
 pub fn main() {
     let data = include_str!("../../data/18.in");
     println!("part 1: {}", solve(data, false));
@@ -12,26 +11,24 @@ pub fn main() {
 /// where `i` denotes the number of lattice points interior to the polygon,
 /// `b` denotes the number of lattice points on the boundary of the polygon,
 /// and `A` denotes the area of the polygon.
-/// 
+///
 /// The Shoelace formula gives us the area of the polygon, `A`.
 /// The perimeter `b` is simply the number of distinct lattice points on the horizontal/vertical edges of the polygon.
-/// 
-/// For this problem we want to calculate `i + b`, so using Pick's theorem, we have 
+///
+/// For this problem we want to calculate `i + b`, so using Pick's theorem, we have
 /// the desired answer is `A + b / 2 + 1`.
-/// 
+///
 /// [Pick's Theorem]: https://en.wikipedia.org/wiki/Pick%27s_theorem
 pub fn solve(data: &str, is_part2: bool) -> usize {
-
     let polygon = parse_polygon(data, is_part2);
     polygon.shoelace_area() + polygon.perimeter() / 2 + 1
 }
-
 
 pub enum Direction {
     Left,
     Up,
     Right,
-    Down
+    Down,
 }
 
 impl Direction {
@@ -40,7 +37,7 @@ impl Direction {
             Direction::Left => (0, -scale),
             Direction::Up => (-scale, 0),
             Direction::Right => (0, scale),
-            Direction::Down => (scale, 0)
+            Direction::Down => (scale, 0),
         }
     }
 }
@@ -52,7 +49,7 @@ impl From<char> for Direction {
             'R' => Direction::Right,
             'U' => Direction::Up,
             'D' => Direction::Down,
-            _ => panic!("invalid direction")
+            _ => panic!("invalid direction"),
         }
     }
 }
@@ -63,9 +60,7 @@ pub fn parse_polygon(data: &str, is_part2: bool) -> LateralPolygon {
 
     let dig_plan_re = Regex::new(r"([DLRU]) (\d+) \((.*)\)").unwrap();
 
-    data
-    .lines()
-    .for_each(|line| {
+    data.lines().for_each(|line| {
         let captures = dig_plan_re.captures(line).unwrap();
         let (dir, steps) = match is_part2 {
             true => {
@@ -76,12 +71,21 @@ pub fn parse_polygon(data: &str, is_part2: bool) -> LateralPolygon {
                     1 => Direction::Down,
                     2 => Direction::Left,
                     3 => Direction::Up,
-                    _ => {panic!("expected one of 0|1|2|3");}
+                    _ => {
+                        panic!("expected one of 0|1|2|3");
+                    }
                 };
                 (dir, hex_encoded_dist as isize)
-            },
+            }
             false => {
-                let dir: Direction = captures.get(1).unwrap().as_str().chars().next().unwrap().into();
+                let dir: Direction = captures
+                    .get(1)
+                    .unwrap()
+                    .as_str()
+                    .chars()
+                    .next()
+                    .unwrap()
+                    .into();
                 let steps: isize = captures.get(2).unwrap().as_str().parse().unwrap();
                 (dir, steps)
             }
@@ -92,7 +96,7 @@ pub fn parse_polygon(data: &str, is_part2: bool) -> LateralPolygon {
         res.push(current_coord);
     });
 
-    LateralPolygon::new(res.into_iter())   
+    LateralPolygon::new(res.into_iter())
 }
 
 #[cfg(test)]
@@ -101,7 +105,7 @@ mod tests {
 
     #[test]
     fn smol() {
-    let data = r"R 6 (#70c710)
+        let data = r"R 6 (#70c710)
 D 5 (#0dc571)
 L 2 (#5713f0)
 D 2 (#d2c081)
