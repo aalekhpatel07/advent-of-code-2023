@@ -20,10 +20,13 @@ pub struct Hailstone {
 
 impl Display for Hailstone {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}, {}, {} @ {}, {}, {}", self.x0, self.y0, self.z0, self.vx, self.vy, self.vz)
+        write!(
+            f,
+            "{}, {}, {} @ {}, {}, {}",
+            self.x0, self.y0, self.z0, self.vx, self.vy, self.vz
+        )
     }
 }
-
 
 impl Hailstone {
     pub fn slope_2d(&self) -> Option<f64> {
@@ -41,8 +44,13 @@ impl Hailstone {
     }
 
     /// Determine if two linear trajectories in R^2 intersect in a given box.
-    pub fn crosses_2d(&self, other: &Hailstone, min_pos: isize, max_pos: isize, debug: bool) -> bool {
-
+    pub fn crosses_2d(
+        &self,
+        other: &Hailstone,
+        min_pos: isize,
+        max_pos: isize,
+        debug: bool,
+    ) -> bool {
         if debug {
             println!("Hailstone A: {}", self);
             println!("Hailstone B: {}", other);
@@ -56,9 +64,9 @@ impl Hailstone {
             return self.pos_2d() == other.pos_2d();
         }
         // Form a system of equations:
-        // x0 + t0 * v0 = x1 + t1 * v1 
-        // where x0, x1 are positions vectors, 
-        // v0, v1 are velocity vectors, 
+        // x0 + t0 * v0 = x1 + t1 * v1
+        // where x0, x1 are positions vectors,
+        // v0, v1 are velocity vectors,
         // and t0, t1 are scalar timestamps where
         // these trajectories intersect.
 
@@ -115,18 +123,31 @@ impl Hailstone {
             return false;
         }
 
-        let pos = (self.x0 as f64 + t0 * self.vx as f64, self.y0 as f64 + t0 * self.vy as f64);
-        let time_bound_valid = (pos.0.min(pos.1) >= min_pos as f64) && (pos.0.max(pos.1) <= max_pos as f64);
+        let pos = (
+            self.x0 as f64 + t0 * self.vx as f64,
+            self.y0 as f64 + t0 * self.vy as f64,
+        );
+        let time_bound_valid =
+            (pos.0.min(pos.1) >= min_pos as f64) && (pos.0.max(pos.1) <= max_pos as f64);
 
         if time_bound_valid {
             if debug {
-                println!("Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).", "inside".bold().green(), pos.0, pos.1);
+                println!(
+                    "Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).",
+                    "inside".bold().green(),
+                    pos.0,
+                    pos.1
+                );
             }
-        } 
-        else if debug {
-            println!("Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).", "outside".red(), pos.0, pos.1);
+        } else if debug {
+            println!(
+                "Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).",
+                "outside".red(),
+                pos.0,
+                pos.1
+            );
         }
-        
+
         time_bound_valid
     }
 }
@@ -136,8 +157,18 @@ pub fn parse_hailstone(s: &str) -> Hailstone {
     let left = left.trim();
     let right = right.trim();
 
-    let position = left.split(", ").map(str::trim).map(str::parse::<isize>).collect::<Result<Vec<isize>, _>>().unwrap();
-    let velocity = right.split(", ").map(str::trim).map(str::parse::<isize>).collect::<Result<Vec<isize>, _>>().unwrap();
+    let position = left
+        .split(", ")
+        .map(str::trim)
+        .map(str::parse::<isize>)
+        .collect::<Result<Vec<isize>, _>>()
+        .unwrap();
+    let velocity = right
+        .split(", ")
+        .map(str::trim)
+        .map(str::parse::<isize>)
+        .collect::<Result<Vec<isize>, _>>()
+        .unwrap();
 
     Hailstone {
         x0: position[0],
@@ -145,16 +176,15 @@ pub fn parse_hailstone(s: &str) -> Hailstone {
         z0: position[2],
         vx: velocity[0],
         vy: velocity[1],
-        vz: velocity[2]
+        vz: velocity[2],
     }
 }
-
 
 pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize) -> usize {
     let hailstones = data.lines().map(parse_hailstone).collect::<Vec<_>>();
     let mut counter = 0;
     for i in 0..hailstones.len() {
-        for j in i+1..hailstones.len() {
+        for j in i + 1..hailstones.len() {
             if hailstones[i].crosses_2d(&hailstones[j], min_pos, max_pos, false) {
                 counter += 1;
             }
@@ -176,5 +206,4 @@ mod tests {
 20, 19, 15 @  1, -5, -3";
         assert_eq!(solve_part1(data, 7, 27), 2);
     }
-
 }
