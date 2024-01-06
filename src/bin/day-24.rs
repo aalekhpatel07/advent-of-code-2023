@@ -50,10 +50,8 @@ impl Hailstone {
 
         // Are trajectories parallel? If so, then they don't cross each other unless they start at the same point.
         if self.slope_2d() == other.slope_2d() {
-            if self.pos_2d() != other.pos_2d() {
-                if debug {
-                    println!("Hailstones' paths are parallel; they never intersect.");
-                }
+            if self.pos_2d() != other.pos_2d() && debug {
+                println!("Hailstones' paths are parallel; they never intersect.");
             }
             return self.pos_2d() == other.pos_2d();
         }
@@ -110,13 +108,11 @@ impl Hailstone {
                 println!("Hailstones' paths crossed in the past for hailstone A.");
             }
             return false;
-        } else {
-            if t1 < 0.0 {
-                if debug {
-                    println!("Hailstones' paths crossed in the past for hailstone B.");
-                }
-                return false;
+        } else if t1 < 0.0 {
+            if debug {
+                println!("Hailstones' paths crossed in the past for hailstone B.");
             }
+            return false;
         }
 
         let pos = (self.x0 as f64 + t0 * self.vx as f64, self.y0 as f64 + t0 * self.vy as f64);
@@ -127,10 +123,8 @@ impl Hailstone {
                 println!("Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).", "inside".bold().green(), pos.0, pos.1);
             }
         } 
-        else {
-            if debug {
-                println!("Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).", "outside".red(), pos.0, pos.1);
-            }
+        else if debug {
+            println!("Hailstones' paths will cross {} the test area (at x={:.3}, y={:.3}).", "outside".red(), pos.0, pos.1);
         }
         
         time_bound_valid
@@ -138,7 +132,7 @@ impl Hailstone {
 }
 
 pub fn parse_hailstone(s: &str) -> Hailstone {
-    let (left, right) = s.split_once("@").unwrap();
+    let (left, right) = s.split_once('@').unwrap();
     let left = left.trim();
     let right = right.trim();
 
