@@ -4,7 +4,7 @@ use colored::Colorize;
 
 fn main() {
     let data = include_str!("../../data/24.in");
-    let res = solve_part1(data, 200000000000000, 400000000000000);
+    let res = solve_part1(data, 200000000000000, 400000000000000, false);
     println!("part 1: {}", res);
 }
 
@@ -180,14 +180,15 @@ pub fn parse_hailstone(s: &str) -> Hailstone {
     }
 }
 
-pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize) -> usize {
+pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize, debug: bool) -> usize {
     let hailstones = data.lines().map(parse_hailstone).collect::<Vec<_>>();
     let mut counter = 0;
     for i in 0..hailstones.len() {
         for j in i + 1..hailstones.len() {
-            if hailstones[i].crosses_2d(&hailstones[j], min_pos, max_pos, false) {
+            if hailstones[i].crosses_2d(&hailstones[j], min_pos, max_pos, debug) {
                 counter += 1;
             }
+            if debug { println!(); }
         }
     }
     counter
@@ -204,6 +205,6 @@ mod tests {
 20, 25, 34 @ -2, -2, -4
 12, 31, 28 @ -1, -2, -1
 20, 19, 15 @  1, -5, -3";
-        assert_eq!(solve_part1(data, 7, 27), 2);
+        assert_eq!(solve_part1(data, 7, 27, true), 2);
     }
 }
