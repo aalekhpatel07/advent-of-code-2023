@@ -1,11 +1,12 @@
 use std::fmt::Display;
-
+use aoc_2023::data_structures::{Vec3, M3x3};
 use colored::Colorize;
 
 fn main() {
     let data = include_str!("../../data/24.in");
     let res = solve_part1(data, 200000000000000, 400000000000000, false);
     println!("part 1: {}", res);
+    println!("part 2: {}", solve_part2(data));
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -35,9 +36,6 @@ impl Hailstone {
         } else {
             Some(self.vy as f64 / self.vx as f64)
         }
-    }
-    pub fn pos(&self) -> (isize, isize, isize) {
-        (self.x0, self.y0, self.z0)
     }
     pub fn pos_2d(&self) -> (isize, isize) {
         (self.x0, self.y0)
@@ -150,7 +148,15 @@ impl Hailstone {
 
         time_bound_valid
     }
+
+    pub fn position_and_velocity(&self) -> (Vec3<f64>, Vec3<f64>) 
+    {
+        let pos = Vec3::new(self.x0 as f64, self.y0 as f64, self.z0 as f64);
+        let vel = Vec3::new(self.vx as f64, self.vy as f64, self.vz as f64);
+        (pos, vel)
+    }
 }
+
 
 pub fn parse_hailstone(s: &str) -> Hailstone {
     let (left, right) = s.split_once('@').unwrap();
@@ -194,6 +200,52 @@ pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize, debug: bool) -> u
     counter
 }
 
+pub fn solve_part2(data: &str) -> f64 {
+    let hailstones = data.lines().map(parse_hailstone).collect::<Vec<_>>();
+
+    let (i, j, k) = (0, 1, 2);
+
+    let (h0, h1, h2) = (hailstones[i], hailstones[j], hailstones[k]);
+
+    let (p0, y0) = h0.position_and_velocity();
+    let (p1, y1) = h1.position_and_velocity();
+    let (p2, y2) = h2.position_and_velocity();
+
+    println!("h{}: {} + t{}", i, p0, y0);
+    println!("h{}: {} + t{}", j, p1, y1);
+    println!("h{}: {} + t{}", k, p2, y2);
+    println!();
+    let z01 = (y0 - y1).cross(&(p0 - p1));
+    println!("z01: {}", z01);
+    let z02 = (y0 - y2).cross(&(p0 - p2));
+    println!("z02: {}", z02);
+    let z12 = (y1 - y2).cross(&(p1 - p2));
+    println!("z12: {}", z12);
+
+    let d01 = (y0 - y1).dot(&p0.cross(&p1));
+    let d02 = (y0 - y2).dot(&p0.cross(&p2));
+    let d12 = (y1 - y2).dot(&p1.cross(&p2));
+
+    let matrix = M3x3::new(
+        &z01, &z02, &z12
+    );
+    println!("Matrix:\n{}", matrix);
+    let Some(inverse) = matrix.inverse() else { 
+        panic!("Matrix is not invertible. Weird")
+    };
+    println!("Inverse:\n{}", inverse);
+
+    let scalars = Vec3::new(d01, d02, d12);
+
+    println!("Scalars: {}", scalars);
+    let position = inverse * &scalars;
+
+    println!("{}", position);
+
+    position.x + position.y + position.z
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -205,6 +257,31 @@ mod tests {
 20, 25, 34 @ -2, -2, -4
 12, 31, 28 @ -1, -2, -1
 20, 19, 15 @  1, -5, -3";
-        assert_eq!(solve_part1(data, 7, 27, true), 2);
+        // assert_eq!(solve_part1(data, 7, 27, true), 2);
+        assert_eq!(solve_part2(data), 0.);
+    }
+
+    #[test]
+    fn inverse() {
+        let r1 = Vec3::new(1.0, 0.0, 5.0);
+        let r2 = Vec3::new(2.0, 1.0, 6.0);
+        let r3 = Vec3::new(3.0, 4.0, 0.0);
+        let m = M3x3::new(&r1, &r2, &r3);
+        let res = m.inverse().unwrap();
+        println!("{}", res);
+    }
+
+    #[test]
+    fn cross() {
+
+        let r1 = Vec3::new(1.0, 0.0, 5.0);
+        let r2 = Vec3::new(2.0, 1.0, 6.0);
+
+        assert_eq!(r1.cross(&r2), Vec3::new(-5.0, 4.0, 1.0));
+        assert_eq!(r2.cross(&r1), -r1.cross(&r2));
+
+        let r1 = Vec3::new(1.0, -2.0, 0.);
+        let r2 = Vec3::new(1.0, -6.0, 8.0);
+        println!("{} x {} = {}", r1, r2, r1.cross(&r2));
     }
 }

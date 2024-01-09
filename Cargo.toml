@@ -28,6 +28,7 @@ day-16 = ["dep:rayon"]
 day-17 = ["dep:rayon", "dep:pathfinding"]
 day-18 = []
 day-19 = []
+day-24 = []
 
 
 [[bin]]
