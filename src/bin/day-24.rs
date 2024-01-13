@@ -1,5 +1,5 @@
 use std::fmt::Display;
-use aoc_2023::data_structures::{Vec, Matrix};
+use nalgebra::*;
 use colored::Colorize;
 
 fn main() {
@@ -149,10 +149,10 @@ impl Hailstone {
         time_bound_valid
     }
 
-    pub fn position_and_velocity(&self) -> (Vec<f64, 3>, Vec<f64, 3>) 
+    pub fn position_and_velocity(&self) -> (Vector3<f64>, Vector3<f64>) 
     {
-        let pos = Vec::new(self.x0 as f64, self.y0 as f64, self.z0 as f64);
-        let vel = Vec::new(self.vx as f64, self.vy as f64, self.vz as f64);
+        let pos = Vector3::new(self.x0 as f64, self.y0 as f64, self.z0 as f64);
+        let vel = Vector3::new(self.vx as f64, self.vy as f64, self.vz as f64);
         (pos, vel)
     }
 }
@@ -201,117 +201,129 @@ pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize, debug: bool) -> u
 }
 
 
-pub fn cross_matrix(v: &Vec<f64, 3>) -> Matrix<f64, 3, 3> {
+/// Given a row vector of dimension 3, build a skew-symmetric matrix
+/// that represents [cross product as matrix multiplication] and
+/// appears in the analytical solution for finding an
+/// initial position and a velocity for a trajectory in R3 that intersects
+/// a given set of other trajectories at different points of time.
+/// 
+/// [cross product as matrix multiplication]: https://en.wikipedia.org/wiki/Skew-symmetric_matrix#Cross_product
+pub fn build_skew_symmetric_matrix(v: &Vector3<f64>) -> Matrix3<f64> {
     let v = v.as_ref();
-    Matrix::try_from_slice(&[
-        0.,
-        -v[2],
-        v[1],
-        v[2],
-        0.,
-        -v[0],
-        -v[1],
-        v[0],
-        0.
-    ]).unwrap()
+    Matrix3::new(
+        0., -v[2], v[1],
+        v[2], 0., -v[0],
+        -v[1], v[0],0.
+    )
 }
 
 
 pub fn solve_part2(data: &str) -> f64 {
     let hailstones = data.lines().map(parse_hailstone).collect::<std::vec::Vec<_>>();
 
+    // Pick the first three hailstones to compute the unique position/velocity for the rock.
     let (i, j, k) = (0, 1, 2);
 
-    let (h0, h1, h2) = (hailstones[i], hailstones[j], hailstones[k]);
+    let (p0, v0) = hailstones[i].position_and_velocity();
+    let (p1, v1) = hailstones[j].position_and_velocity();
+    let (p2, v2) = hailstones[k].position_and_velocity();
 
-    let (p0, v0) = h0.position_and_velocity();
-    let (p1, v1) = h1.position_and_velocity();
-    let (p2, v2) = h2.position_and_velocity();
+    // The solution comes from the observation that (P - Pi) X (V - Vi) = 0,
+    // and then simplifying to get
+    // (Pi X V) + (P X Vi) - (Pi X Vi) = (Pj X V) + (P X Vj) - (Pj X Vj) for all i, j.
+
+    // Velocity terms for equations between h0 and h1.
+    let top_left = build_skew_symmetric_matrix(&v0) - build_skew_symmetric_matrix(&v1);
+    // Velocity terms for equations between h0 and h2.
+    let bottom_left = build_skew_symmetric_matrix(&v0) - build_skew_symmetric_matrix(&v2);
+    // Position terms for equations between h0 and h1.
+    let top_right = build_skew_symmetric_matrix(&p1) - build_skew_symmetric_matrix(&p0);
+    // Position terms for equations between h0 and h2.
+    let bottom_right = build_skew_symmetric_matrix(&p2) - build_skew_symmetric_matrix(&p0);
+
+    // The solution then is found by solving Ax=b where A is a 6x6 matrix formed
+    // from the smaller skew symmetric matrices as quadrants, x is the 6x1 row vector
+    // representing the positions and velocities (unknowns), and b is the row vector of 
+    // cross product differences between pairs of trajectories.
+    let mut coefficient_matrix: Matrix6<f64> = Matrix6::new(
+        top_left.m11,
+        top_left.m12,
+        top_left.m13,
+        top_right.m11,
+        top_right.m12,
+        top_right.m13,
+        top_left.m21,
+        top_left.m22,
+        top_left.m23,
+        top_right.m21,
+        top_right.m22,
+        top_right.m23,
+        top_left.m31,
+        top_left.m32,
+        top_left.m33,
+        top_right.m31,
+        top_right.m32,
+        top_right.m33,
+        bottom_left.m11,
+        bottom_left.m12,
+        bottom_left.m13,
+        bottom_right.m11,
+        bottom_right.m12,
+        bottom_right.m13,
+        bottom_left.m21,
+        bottom_left.m22,
+        bottom_left.m23,
+        bottom_right.m21,
+        bottom_right.m22,
+        bottom_right.m23,
+        bottom_left.m31,
+        bottom_left.m32,
+        bottom_left.m33,
+        bottom_right.m31,
+        bottom_right.m32,
+        bottom_right.m33,
+    );
+
+    if !coefficient_matrix.try_inverse_mut() {
+        panic!("coefficient matrix isn't invertible, so no solutions exist.");
+    }
 
     let row_vector_upper = p1.cross(&v1) - p0.cross(&v0);
     let row_vector_lower = p2.cross(&v2) - p0.cross(&v0);
 
+    let row_vector = Vector6::new(
+        row_vector_upper.x,
+        row_vector_upper.y,
+        row_vector_upper.z,
+        row_vector_lower.x,
+        row_vector_lower.y,
+        row_vector_lower.z,
+    );
 
-    println!("{}, {}", row_vector_upper, row_vector_lower);
-    // let row_data = vec![
-    //     row_vector_upper.x,
-    //     row_vector_upper.y,
-    //     row_vector_upper.z,
-    //     row_vector_lower.x,
-    //     row_vector_lower.y,
-    //     row_vector_lower.z
-    // ];
+    let rock_pos_vel = coefficient_matrix * row_vector;
+    let arr = rock_pos_vel.as_ref();
+    let mut pos = Vector3::from_row_slice(&arr[..3]);
 
-    // // let matrix: Matrix<f64, 6, 6> = Matrix::try_from_slice(&matrix_data).unwrap();
-    // let row: Vec<f64, 6> = Vec::try_from_slice(&row_data).unwrap();
+    // Floating point precision issue.
+    // Aggressively round values if they don't lie
+    // on quarters.
+    if pos.y.fract() < 0.2 || pos.y.fract() > 0.8 {
+        pos.y = pos.y.round();
+    }
+    if pos.x.fract() < 0.2 || pos.x.fract() > 0.8 {
+        pos.x = pos.x.round();
+    }
+    if pos.z.fract() < 0.2 || pos.z.fract() > 0.8 {
+        pos.z = pos.z.round();
+    }
+    pos.sum().floor()
 
-    // println!("old:\n{}", matrix);
-    // println!("old:\n{}", row);
-
-    let top_left = cross_matrix(&v0) - cross_matrix(&v1);
-    let bottom_left = cross_matrix(&v0) + cross_matrix(&v2);
-    let top_right = cross_matrix(&p1) - cross_matrix(&p0);
-    let bottom_right = cross_matrix(&p2) - cross_matrix(&p0);
-
-
-    let matrix = Matrix::<f64, 6, 6>::try_from_blocks(
-        &top_left, 
-        &top_right, 
-        &bottom_left, 
-        &bottom_right
-    ).unwrap();
-
-    println!("{}", matrix);
-    let m1 = matrix.get_block::<3, 3>(0, 0).unwrap();
-    let m2 = matrix.get_block::<3, 3>(0, 3).unwrap();
-    let m3 = matrix.get_block::<3, 3>(3, 0).unwrap();
-    let m4 = matrix.get_block::<3, 3>(3, 3).unwrap();
-    println!("{}\n{}\n{}\n{}", m1, m2, m3, m4);
-
-    println!("{}", matrix.inverse().unwrap());
-
-    // Matrix::try_from_slice()
-
-    // println!("h{}: {} + t{}", i, p0, y0);
-    // println!("h{}: {} + t{}", j, p1, y1);
-    // println!("h{}: {} + t{}", k, p2, y2);
-    // println!();
-    // let z01 = (y0 - y1).cross(&(p0 - p1));
-    // println!("z01: {}", z01);
-    // let z02 = (y0 - y2).cross(&(p0 - p2));
-    // println!("z02: {}", z02);
-    // let z12 = (y1 - y2).cross(&(p1 - p2));
-    // println!("z12: {}", z12);
-
-    // let d01 = (y0 - y1).dot(&p0.cross(&p1));
-    // let d02 = (y0 - y2).dot(&p0.cross(&p2));
-    // let d12 = (y1 - y2).dot(&p1.cross(&p2));
-
-    // let matrix = M3x3::new(
-    //     &z01, &z02, &z12
-    // );
-    // println!("Matrix:\n{}", matrix);
-    // let Some(inverse) = matrix.inverse() else { 
-    //     panic!("Matrix is not invertible. Weird")
-    // };
-    // println!("Inverse:\n{}", inverse);
-
-    // let scalars = Vec3::new(d01, d02, d12);
-
-    // println!("Scalars: {}", scalars);
-    // let position = inverse * &scalars;
-
-    // println!("{}", position);
-
-    // position.x + position.y + position.z
-    0.
 }
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aoc_2023::data_structures::Vec;
 
     #[test]
     fn smol() {
@@ -320,21 +332,7 @@ mod tests {
 20, 25, 34 @ -2, -2, -4
 12, 31, 28 @ -1, -2, -1
 20, 19, 15 @  1, -5, -3";
-        // assert_eq!(solve_part1(data, 7, 27, true), 2);
-        assert_eq!(solve_part2(data), 0.);
-    }
-
-    #[test]
-    fn cross() {
-
-        let r1 = Vec::<f64, 3>::new(1.0, 0.0, 5.0);
-        let r2 = Vec::<f64, 3>::new(2.0, 1.0, 6.0);
-
-        assert_eq!(r1.cross(&r2), Vec::<f64, 3>::new(-5.0, 4.0, 1.0));
-        assert_eq!(r2.cross(&r1), -r1.cross(&r2));
-
-        let r1 = Vec::<f64, 3>::new(1.0, -2.0, 0.);
-        let r2 = Vec::new(1.0, -6.0, 8.0);
-        println!("{} x {} = {}", r1, r2, r1.cross(&r2));
+        assert_eq!(solve_part1(data, 7, 27, true), 2);
+        assert_eq!(solve_part2(data), 47.);
     }
 }

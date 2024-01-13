@@ -17,7 +17,7 @@ repository = "https://github.com/aalekhpatel07/advent-of-code-2023.git"
 lto = "fat"
 
 [features]
-default = ["day-12", "day-13", "day-14", "day-16", "day-17", "day-18", "day-19"]
+default = ["day-12", "day-13", "day-14", "day-16", "day-17", "day-18", "day-19", "day-24"]
 inputs = ["dep:bytes", "dep:chrono", "dep:clap", "dep:reqwest", "dep:tokio", "dep:dotenv"]
 submit = ["dep:reqwest"]
 day-12 = ["dep:rayon"]
@@ -28,7 +28,7 @@ day-16 = ["dep:rayon"]
 day-17 = ["dep:rayon", "dep:pathfinding"]
 day-18 = []
 day-19 = []
-day-24 = []
+day-24 = ["dep:nalgebra"]
 
 
 [[bin]]
@@ -85,6 +85,7 @@ colorgrad = { version = "0.6.2" }
 dotenv = { version = "0.15.0", optional = true }
 indicatif = { version = "0.17.7", features = ["rayon"] }
 lazy_static = "1.4.0"
+nalgebra = { version = "0.32.3", optional = true }
 pathfinding = { version = "4.6.0", optional = true }
 rayon = { version = "1.8.0", optional = true }
 regex = "1.10.2"
