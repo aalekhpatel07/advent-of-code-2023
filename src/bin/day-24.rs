@@ -1,6 +1,6 @@
-use std::fmt::Display;
-use nalgebra::*;
 use colored::Colorize;
+use nalgebra::*;
+use std::fmt::Display;
 
 fn main() {
     let data = include_str!("../../data/24.in");
@@ -149,14 +149,12 @@ impl Hailstone {
         time_bound_valid
     }
 
-    pub fn position_and_velocity(&self) -> (Vector3<f64>, Vector3<f64>) 
-    {
+    pub fn position_and_velocity(&self) -> (Vector3<f64>, Vector3<f64>) {
         let pos = Vector3::new(self.x0 as f64, self.y0 as f64, self.z0 as f64);
         let vel = Vector3::new(self.vx as f64, self.vy as f64, self.vz as f64);
         (pos, vel)
     }
 }
-
 
 pub fn parse_hailstone(s: &str) -> Hailstone {
     let (left, right) = s.split_once('@').unwrap();
@@ -187,39 +185,41 @@ pub fn parse_hailstone(s: &str) -> Hailstone {
 }
 
 pub fn solve_part1(data: &str, min_pos: isize, max_pos: isize, debug: bool) -> usize {
-    let hailstones = data.lines().map(parse_hailstone).collect::<std::vec::Vec<_>>();
+    let hailstones = data
+        .lines()
+        .map(parse_hailstone)
+        .collect::<std::vec::Vec<_>>();
     let mut counter = 0;
     for i in 0..hailstones.len() {
         for j in i + 1..hailstones.len() {
             if hailstones[i].crosses_2d(&hailstones[j], min_pos, max_pos, debug) {
                 counter += 1;
             }
-            if debug { println!(); }
+            if debug {
+                println!();
+            }
         }
     }
     counter
 }
-
 
 /// Given a row vector of dimension 3, build a skew-symmetric matrix
 /// that represents [cross product as matrix multiplication] and
 /// appears in the analytical solution for finding an
 /// initial position and a velocity for a trajectory in R3 that intersects
 /// a given set of other trajectories at different points of time.
-/// 
+///
 /// [cross product as matrix multiplication]: https://en.wikipedia.org/wiki/Skew-symmetric_matrix#Cross_product
 pub fn build_skew_symmetric_matrix(v: &Vector3<f64>) -> Matrix3<f64> {
     let v = v.as_ref();
-    Matrix3::new(
-        0., -v[2], v[1],
-        v[2], 0., -v[0],
-        -v[1], v[0],0.
-    )
+    Matrix3::new(0., -v[2], v[1], v[2], 0., -v[0], -v[1], v[0], 0.)
 }
 
-
 pub fn solve_part2(data: &str) -> f64 {
-    let hailstones = data.lines().map(parse_hailstone).collect::<std::vec::Vec<_>>();
+    let hailstones = data
+        .lines()
+        .map(parse_hailstone)
+        .collect::<std::vec::Vec<_>>();
 
     // Pick the first three hailstones to compute the unique position/velocity for the rock.
     let (i, j, k) = (0, 1, 2);
@@ -243,7 +243,7 @@ pub fn solve_part2(data: &str) -> f64 {
 
     // The solution then is found by solving Ax=b where A is a 6x6 matrix formed
     // from the smaller skew symmetric matrices as quadrants, x is the 6x1 row vector
-    // representing the positions and velocities (unknowns), and b is the row vector of 
+    // representing the positions and velocities (unknowns), and b is the row vector of
     // cross product differences between pairs of trajectories.
     let mut coefficient_matrix: Matrix6<f64> = Matrix6::new(
         top_left.m11,
@@ -317,9 +317,7 @@ pub fn solve_part2(data: &str) -> f64 {
         pos.z = pos.z.round();
     }
     pos.sum().floor()
-
 }
-
 
 #[cfg(test)]
 mod tests {
