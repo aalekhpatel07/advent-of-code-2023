@@ -1,10 +1,9 @@
 use petgraph::{
     algo::minimum_cut,
     graph::UnGraph,
-    stable_graph::IndexType,
     visit::{
-        Bfs, EdgeRef, GraphBase, IntoEdgeReferences, IntoEdges, IntoNodeIdentifiers,
-        NodeCompactIndexable, NodeCount, NodeIndexable,
+        EdgeRef, GraphBase, IntoEdgeReferences, IntoNodeIdentifiers,
+        NodeCount, NodeIndexable,
     },
     Graph, Undirected,
 };
