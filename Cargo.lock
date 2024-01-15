@@ -1041,7 +1041,7 @@ checksum = "e3148f5046208a5d56bcfc03053e3ca6334e51da8dfb19b6cdc8b306fae3283e"
 [[package]]
 name = "petgraph"
 version = "0.6.4"
-source = "git+https://github.com/aalekhpatel07/petgraph.git?branch=pathtracker#d044091723dd4f48d88d7c276a233d0e154ba6cb"
+source = "git+https://github.com/gbagan/petgraph.git?branch=master#4fccfe94048bbded4fba38f4c576d6f9b29d72f3"
 dependencies = [
  "fixedbitset",
  "indexmap",

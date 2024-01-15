@@ -30,6 +30,7 @@ pub async fn download_inputs(
     };
 
     if resp.status() != 200 {
+        eprintln!("{}", resp.text_with_charset("utf-8").await.unwrap());
         return Err(format!(
             "could not get a successful response for day: {}",
             day
