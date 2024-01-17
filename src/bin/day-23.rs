@@ -1,8 +1,8 @@
-use std::str::FromStr;
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, HashSet, HashMap, VecDeque};
-use colored::{Colorize, ColoredString};
-use petgraph::visit::EdgeRef;
+use std::str::FromStr;
+use std::collections::{HashSet, VecDeque, BinaryHeap};
+use colored::ColoredString;
+use std::collections::HashMap;
 
 
 fn main() {
@@ -11,298 +11,270 @@ fn main() {
     println!("part 1: {}", solve_part1(&trails));
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Trail {
-    Path,
-    Forest,
-    Slope(Direction)
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub enum Direction {
-    Left,
-    Right,
-    Up,
-    Down
-}
-
-impl Direction {
-    #[inline(always)]
-    pub const fn coord(&self) -> Coord {
-        match self {
-            Self::Left => (0, -1),
-            Self::Down => (1, 0),
-            Self::Right => (0, 1),
-            Self::Up => (-1, 0)
-        }
-    }
-}
-
-impl std::fmt::Display for Direction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match *self {
-            Self::Up => "^",
-            Self::Down => "v",
-            Self::Left => "<",
-            Self::Right => ">"
-        };
-        write!(f, "{}", s)
-    }
-}
-
-impl FromStr for Trail {
-    type Err = String;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.as_ref() {
-            "#" => Ok(Self::Forest),
-            "." => Ok(Self::Path),
-            ">" => Ok(Self::Slope(Direction::Right)),
-            "<" => Ok(Self::Slope(Direction::Left)),
-            "^" => Ok(Self::Slope(Direction::Up)),
-            "v" => Ok(Self::Slope(Direction::Down)),
-            _ => Err("Unknown Trail".to_string())
-        }
-    }
-}
-impl std::fmt::Debug for Trail {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self)
-    }
-}
-
-impl std::fmt::Display for Trail {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let c = match *self {
-            Self::Forest => "#".to_string(),
-            Self::Path => ".".to_string(),
-            Self::Slope(d) => d.to_string()
-        };
-        write!(f, "{}", c)
-    }
-}
-
-impl std::fmt::Display for Trails {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        for row in self.0.iter() {
-            _ = writeln!(f, "{}", row.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(""));
-        }
-        Ok(())
-    }
-}
-
 type Coord = (isize, isize);
-type HeapEntry = (Reverse<isize>, Coord, Option<Coord>);
+
+pub trait VisitBfs<N> {
+
+    fn on_node_discovered(&mut self, node: N, parent: Option<N>, breadth: usize);
+    fn is_goal(&self, node: N) -> bool { false }
+}
+
+
+pub trait VisitDfs<N> {
+
+    fn on_node_started(&mut self, node: N, parent: Option<N>, depth: usize) {}
+
+    /// The entire subtree rooted at this node has been visited at this point.
+    fn on_node_finished(&mut self, node: N, depth: usize) {}
+    fn on_goal_reached(&mut self, node: N, depth: usize) {
+
+    }
+    fn is_goal(&self, node: N) -> bool;
+}
+
+#[derive(Debug, Clone)]
+pub struct LongestPathIterator<'trails> {
+    trails: &'trails Trails,
+    start: Coord,
+    end: Coord,
+    longest_path_length: usize,
+}
+
+impl<'trails> LongestPathIterator<'trails> {
+    pub fn new(start: Coord, end: Coord, trails: &'trails Trails) -> Self {
+        Self {
+            trails,
+            start,
+            end,
+            longest_path_length: 0,
+        }
+    }
+}
+
+impl VisitDfs<Coord> for LongestPathIterator<'_> {
+    fn is_goal(&self, node: Coord) -> bool {
+        node == self.end
+    }
+
+    fn on_node_finished(&mut self, node: Coord, depth: usize) {
+        
+    }
+    fn on_goal_reached(&mut self, node: Coord, depth: usize) {
+        self.longest_path_length = self.longest_path_length.max(depth);
+    }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct JunctionMapBuilder<'trails> {
+    trails: &'trails Trails,
+    start: Coord,
+    end: Coord,
+    parent_map: HashMap<Coord, Option<Coord>>,
+    junctions: HashSet<Coord>
+}
+
+pub type CompressedMap = HashMap<Coord, HashMap<Coord, usize>>;
+
+impl<'a> JunctionMapBuilder<'a> {
+    pub fn new(start: Coord, end: Coord, trails: &'a Trails) -> Self {
+        Self {
+            trails,
+            start,
+            end,
+            parent_map: Default::default(),
+            junctions: Default::default()
+        }
+    }
+
+    fn is_junction(&self, pos: Coord) -> bool {
+        self.trails.neighbors_part2(pos).len() >= 3
+    }
+
+    pub fn compress(&mut self) -> CompressedMap {
+        let mut compressed = CompressedMap::new();
+
+        // TODO:
+        // Starting at junctions and walking backwards towards the start node,
+        // find all the intermediate junctions and track their distances 
+        // using the parent_map.
+        for &junction in self.junctions.iter() {
+            let distances_from_junction = compressed.entry(junction).or_insert(Default::default());
+
+            let mut current = junction;
+            let mut dist = 0;
+            while current != self.start {
+                current = self.parent_map.get(&current).unwrap().unwrap();
+                dist += 1;
+                if self.is_junction(current) || current == self.start {
+                    distances_from_junction.insert(current, dist);
+                }
+            }
+        }
+
+        for (key, val) in compressed.iter() {
+            println!("{:?}: {:?}", key, val);
+        }
+        // Now invert this map to get distances from source to target instead of "to source from target".
+        let mut compressed_inv = HashMap::new();
+
+        for (target, value) in compressed.into_iter() {
+            for (source, dist) in value.into_iter() {
+                compressed_inv
+                .entry(source)
+                .and_modify(|mapping: &mut HashMap<Coord, usize>| {
+                    mapping.entry(target).and_modify(|d| *d = dist).or_insert(dist);
+                })
+                .or_insert_with(|| {
+                    let mut _m = HashMap::new();
+                    _m.insert(target, dist);
+                    _m
+                });
+            }
+        }
+        println!("");
+        
+        compressed_inv
+    }
+}
+
+
+impl VisitBfs<Coord> for JunctionMapBuilder<'_> {
+
+    fn on_node_discovered(&mut self, node: Coord, parent: Option<Coord>, _breadth: usize) {
+        self.parent_map.insert(node, parent);
+
+        if self.is_junction(node) || node == self.start || node == self.end {
+            self.junctions.insert(node);
+        }
+    }
+}
 
 impl Trails {
-    pub fn neighbors(&self, pos: Coord) -> HashSet<Coord> {
-        let (row, col) = (pos.0, pos.1);
-        
-        let deltas = [
-            (-1, 0), 
-            (1, 0), 
-            (0, -1), 
-            (0, 1)
-        ];
-        let mut res = HashSet::<(isize, isize)>::new();
 
-        if row < 0 || row >= self.0.len() as isize {
-            return res;
-        }
-        if col < 0 || col >= self.0[0].len() as isize {
-            return res;
-        }
-        match self.0[row as usize][col as usize] {
-            Trail::Slope(dir) => {
-                let delta = dir.coord();
-                let (cx, cy) = (row + delta.0, col + delta.1);
-                if cx < 0 || cx >= self.0.len() as isize {
-                    return res;
+    pub fn neighbors_part1(&self, pos: Coord) -> HashSet<Coord> {
+        let (row, col) = (pos.0, pos.1);
+        let deltas = 
+            match self.0[pos.0 as usize][pos.1 as usize] {
+                b'>' => {
+                    vec![(0, 1)]
+                },
+                b'<' => {
+                    vec![(0, -1)]
+                },
+                b'^' => {
+                    vec![(-1, 0)]
+                },
+                b'v' => {
+                    vec![(1, 0)]
+                },
+                _ => {
+                    vec![(-1, 0), (1, 0), (0, -1), (0, 1)]
                 }
-                if cy < 0 || cy >= self.0[0].len() as isize {
-                    return res;
-                }
-                if self.0[cx as usize][cy as usize] == Trail::Path {
+            };
+
+        let mut res = HashSet::<(isize, isize)>::new();
+        for (dx, dy) in deltas {
+            let (cx, cy) = (row + dx, col + dy);
+            if 0 <= cx && cx < self.0.len() as isize && 0 <= cy && cy < self.0[0].len() as isize {
+                if self.0[cx as usize][cy as usize] != b'#' {
                     res.insert((cx, cy));
                 }
-            },
-            Trail::Path => {
-                for delta in deltas {
-                    let (cx, cy) = (row + delta.0, col + delta.1);
-
-                    if cx < 0 || cx >= self.0.len() as isize {
-                        continue;
-                    }
-                    if cy < 0 || cy >= self.0[0].len() as isize {
-                        continue;
-                    }
-                    // println!("{:?}", (cx, cy));
-                    if matches!(self.0[cx as usize][cy as usize], Trail::Path | Trail::Slope(_)) {
-                        res.insert((cx, cy));
-                    }
-                }
-            },
-            _ => {}
+            }
         }
         res
     }
 
-    pub fn find_splitters(&self) -> Vec<(Coord, usize)> {
+    pub fn neighbors_part2(&self, pos: Coord) -> HashSet<Coord> {
+        let (row, col) = (pos.0, pos.1);
+        let deltas = vec![(-1, 0), (1, 0), (0, -1), (0, 1)];
 
-        let mut splitters = vec![];
-
-        self.bfs((0, 1), |node, prev, dist| {
-            let mut nbs = self.neighbors(node);
-            if let Some(prev) = prev {
-                nbs.remove(&prev);
-            }
-            if nbs.len() >= 2 {
-                splitters.push((node, dist));
-            }
-        });
-
-        splitters
-    }
-
-    pub fn debug_splitters(&self, splitters: &[(Coord, usize)]) {
-
-        let splitters = splitters.into_iter().map(|s| (s.0.0, s.0.1)).collect::<HashSet<_>>();
-        
-        self.show_colored(|coord, _| {
-            match splitters.contains(&coord) {
-                true => {
-                    Some("X".color(colored::Color::Red))
-                },
-                false => None
-            }
-        });
-    }
-
-    pub fn bfs<F>(&self, start: Coord, mut visit: F) 
-    where
-        F: FnMut(Coord, Option<Coord>, usize) -> ()
-    {
-        let mut queue: VecDeque<(Coord, Option<Coord>, usize)> = VecDeque::new();
-        queue.push_back((start, None, 0));
-        let mut visited : HashSet<Coord> = HashSet::new();
-
-        while let Some((curr, prev, dist)) = queue.pop_front() {
-            visit(curr, prev, dist);
-            visited.insert(curr);
-
-            for neighbor in self.neighbors(curr) {
-                if !visited.contains(&neighbor) {
-                    queue.push_back((neighbor, Some(curr), dist + 1));
+        let mut res = HashSet::<(isize, isize)>::new();
+        for (dx, dy) in deltas {
+            let (cx, cy) = (row + dx, col + dy);
+            if 0 <= cx && cx < self.0.len() as isize && 0 <= cy && cy < self.0[0].len() as isize {
+                if self.0[cx as usize][cy as usize] != b'#' {
+                    res.insert((cx, cy));
                 }
             }
         }
+        res
     }
+}
 
-    pub fn max_bfs<F, E>(&self, start: Coord, mut visit: F, reached_end: E) 
-    where
-        F: FnMut(Coord, Option<Coord>, usize) -> (),
-        E: Fn(Coord) -> bool
-    {
-        let mut queue: BinaryHeap<(Reverse<isize>, Coord, Option<Coord>)> = BinaryHeap::new();
-        queue.push((Reverse(0), start, None));
-        let mut visited : HashSet<Coord> = HashSet::new();
 
-        while let Some((dist, curr, prev)) = queue.pop() {
-            visit(curr, prev, (-dist.0) as usize);
-            visited.insert(curr);
-            if reached_end(curr) {
-                return;
-            }
+pub fn bfs<V, N, NeighborFn, I>(
+    start: N,
+    neighbors: NeighborFn,
+    visitor: &mut V,
+)
+where   
+    V: VisitBfs<N>,
+    NeighborFn: Fn(N) -> I,
+    N: std::hash::Hash + Eq + Copy,
+    I: IntoIterator<Item=N>
+{
+    let mut deque = VecDeque::new();
+    deque.push_back((start, None, 0usize));
+    let mut seen = HashSet::new();
 
-            for neighbor in self.neighbors(curr) {
-                if !visited.contains(&neighbor) {
-                    queue.push((Reverse(dist.0 - 1), neighbor, Some(curr)));
-                }
+    while let Some((node, parent, breadth)) = deque.pop_front() {
+        seen.insert(node);
+        visitor.on_node_discovered(node, parent, breadth);
+        if visitor.is_goal(node) {
+            break;
+        }
+        for neighbor in neighbors(node) {
+            if !seen.contains(&neighbor) {
+                deque.push_back((neighbor, Some(node), breadth + 1));
             }
         }
     }
+}
 
-    pub fn longest_path(&self, start: Coord, end: Coord) -> Option<Vec<(usize, usize, usize)>> {
-
-        let mut predecessors = HashMap::new();
-
-        self.max_bfs(
-            start, 
-            |curr, prev, _dist| {
-                predecessors.insert(curr, prev);
-            }, 
-            |e| e == end
-        );
-        Self::read_path_from_predecessors(
-            &predecessors,
-            start, 
-            end
-        )
+fn _dfs<V, NeighborFn, I>(
+    start: Coord, 
+    depth: usize,
+    neighbors: &NeighborFn,
+    visitor: &mut V,
+    seen: &mut HashSet<Coord>
+) 
+where
+    V: VisitDfs<Coord>,
+    NeighborFn: Fn(Coord) -> I,
+    I: IntoIterator<Item=Coord>,
+{
+    if visitor.is_goal(start) {
+        visitor.on_goal_reached(start, depth);
     }
 
-    fn read_path_from_predecessors(
-        predecessors: &HashMap<Coord, Option<Coord>>, 
-        start: Coord, 
-        end: Coord
-    ) -> Option<Vec<(usize, usize, usize)>> {
-        if start == end {
-            return Some(vec![(start.0 as usize, start.1 as usize, 0)]);
-        }
-        let Some(mut prev) = predecessors.get(&end) else {
-            return None;
-        };
-        let mut res = vec![end];
-
-        loop {
-            if prev == &Some(start) {
-                res.push(start);
-                break;
-            }
-            let Some(prev_coord) = prev else {
-                break;
-            };
-
-            res.push(*prev_coord);
-            if predecessors.get(prev_coord).is_none() {
-                return None;
-            }
-            prev = predecessors.get(prev_coord).unwrap();
-
-        }
-
-        res.reverse();
-        Some(res.into_iter().enumerate().map(|(idx, v)| (v.0 as usize, v.1 as usize, idx)).collect())
-    }
-
-    pub fn show_colored<F>(&self, get_color: F)
-    where
-        F: Fn(Coord, &Trail) -> Option<ColoredString>
-    {
-        let mut res = vec![vec!["".to_string(); self.0[0].len()]; self.0.len()];
-
-        for (row_idx, row) in self.0.iter().enumerate() {
-            for (col_idx, entry) in row.iter().enumerate() {
-                match get_color((row_idx as isize, col_idx as isize), entry) {
-                    Some(colored_string) => {
-                        res[row_idx][col_idx] = colored_string.to_string();
-                    },
-                    None => {
-                        res[row_idx][col_idx] = entry.to_string();
-                    }
-                }
-            }
-            println!("{}", res[row_idx].iter().map(|s| s.to_string()).collect::<Vec<_>>().join(""));
+    for neighbor in neighbors(start) {
+        if !seen.contains(&neighbor) {
+            seen.insert(neighbor);
+            _dfs(neighbor, depth + 1, neighbors, visitor, seen);
+            seen.remove(&neighbor);
+            visitor.on_node_finished(start, depth)
         }
     }
+}
+
+
+pub fn dfs<V, NeighborFn, I>(
+    start: Coord, 
+    neighbors: NeighborFn,
+    visitor: &mut V,
+)
+where
+    V: VisitDfs<Coord>,
+    NeighborFn: Fn(Coord) -> I,
+    I: IntoIterator<Item=Coord>
+{
+    let mut seen = HashSet::new();
+    _dfs(start, 0, &neighbors, visitor, &mut seen)
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Trails(Vec<Vec<Trail>>);
-
-impl AsRef<Vec<Vec<Trail>>> for Trails {
-    fn as_ref(&self) -> &Vec<Vec<Trail>> {
-        &self.0
-    }
-}
+pub struct Trails(Vec<Vec<u8>>);
 
 impl FromStr for Trails {
     type Err = String;
@@ -311,7 +283,7 @@ impl FromStr for Trails {
         for line in s.lines() {
             let mut row = vec![];
             for entry in line.chars() {
-                row.push(entry.to_string().parse::<Trail>().unwrap());
+                row.push(entry as u8);
             }
             island.push(row);
         }
@@ -323,97 +295,49 @@ impl FromStr for Trails {
 pub fn solve_part1(trails: &Trails) -> usize {
     let start: Coord = (0, 1);
     let end: Coord = (trails.0.len() as isize - 1, trails.0[0].len() as isize - 2);
-    let mut splitters = trails.find_splitters();
+    let mut longest_path_finder = LongestPathIterator::new(start, end, trails);
 
-    splitters.insert(0, (start, 0));
-    splitters.push((end, 0));
+    dfs(
+        start, 
+        |node| trails.neighbors_part1(node), 
+        &mut longest_path_finder,
+    );
 
-
-    let vertices = 
-        splitters
-        .iter()
-        .map(|&(coord, _)| coord)
-        .collect::<Vec<_>>();
-
-    let mut distances: HashMap<Coord, HashMap<Coord, usize>> = HashMap::new();
-
-    for &v in vertices.iter() {
-        for &u in vertices.iter() {
-            if u == v {
-                continue;
-            }
-
-            let dist = {
-                match trails.longest_path(v, u) {
-                    Some(path) => path.len() - 1,
-                    None => usize::MAX
-                }
-            };
-
-            distances
-            .entry(v)
-            .and_modify(|d| {
-                d.insert(u, dist);
-            })
-            .or_insert_with(|| {
-                let mut h = HashMap::new();
-                h.insert(u, dist);
-                h
-            });
-        }
-    }
-
-    let mut edges = vec![];
-    let mut nodes = HashSet::new();
-
-    for (&source, target_distances) in distances.iter() {
-        for (&target, &dist) in target_distances.iter() {
-            nodes.insert(source);
-            nodes.insert(target);
-            if dist != usize::MAX {
-                edges.push((source, target, dist));
-            }
-        }
-    }
-
-    let mut graph = petgraph::graph::Graph::<(isize, isize), usize>::new();
-
-    let mut node_ids = HashMap::new();
-
-    for node in nodes {
-        let node_id = graph.add_node(node);
-        node_ids.insert(node, node_id);
-    }
-
-    for (source, target, dist) in edges {
-        graph.add_edge(*node_ids.get(&source).unwrap(), *node_ids.get(&target).unwrap(), dist);
-
-    }
-
-    let ordered = petgraph::algo::toposort(&graph, None).unwrap();
-
-    let mut distances_final = HashMap::new();
-    for &node_id in node_ids.values() {
-        distances_final.insert(node_id, i64::MIN);
-    }
-
-    distances_final.insert(*node_ids.get(&(0, 1)).unwrap(), 0);
-
-    for &node_id in ordered.iter() {
-        for edge in graph.edges(node_id) {
-            let best_so_far = *distances_final.get(&edge.target()).unwrap();
-            let candidate = *distances_final.get(&node_id).unwrap() + *edge.weight() as i64;
-            if candidate > best_so_far {
-                *distances_final.get_mut(&edge.target()).unwrap() = candidate;
-            }
-        }
-    }
-
-    *distances_final.get(node_ids.get(&end).unwrap()).unwrap() as usize
+    longest_path_finder.longest_path_length
 }
 
 
-pub fn solve_part2(data: &str) -> usize {
+pub fn solve_part2(trails: &Trails) -> usize {
+    let start: Coord = (0, 1);
+    let end: Coord = (trails.0.len() as isize - 1, trails.0[0].len() as isize - 2);
+
+    let mut builder = JunctionMapBuilder::new(start, end, trails);
+
+    bfs(
+        start, 
+        |node| trails.neighbors_part2(node), 
+        &mut builder
+    );
+
+    let compressed = builder.compress();
+
+    // println!("{:?}", compressed);
+
+    for (key, value) in compressed.iter() {
+        println!("{:?}: {:?}", key, value);
+    }
+
+
+    // let start: Coord = (0, 1);
+    // let end: Coord = (trails.0.len() as isize - 1, trails.0[0].len() as isize - 2);
+
+    // let mut junction_finder = JunctionMapBuilder::new(start, end, trails);
+    
+    // bfs(start, |node| trails.neighbors_part2(node), &mut junction_finder);
+
+    // let compressed = junction_finder.compress();
+
+    // 0
     0
 }
 
@@ -448,15 +372,8 @@ mod tests {
 #####################.#";
 
         let trails = data.parse::<Trails>().unwrap();
-        // let path = trails.shortest_path(
-        //     (0, 1), 
-        //     (trails.0.len() as isize - 1, trails.0[0].len() as isize - 2)
-        // );
-        // trails.debug_path(&path);
-
-        // let splitters = trails.find_splitters();
-        // trails.debug_splitters(&splitters);
         assert_eq!(solve_part1(&trails), 94);
+        assert_eq!(solve_part2(&trails), 0);
 
     }
 }
