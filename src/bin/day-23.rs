@@ -2,7 +2,7 @@ use std::str::FromStr;
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashSet, HashMap, VecDeque};
 use colored::{Colorize, ColoredString};
-use colorgrad::{Gradient, Color};
+use petgraph::visit::EdgeRef;
 
 
 fn main() {
@@ -27,6 +27,7 @@ pub enum Direction {
 }
 
 impl Direction {
+    #[inline(always)]
     pub const fn coord(&self) -> Coord {
         match self {
             Self::Left => (0, -1),
@@ -196,31 +197,6 @@ impl Trails {
         }
     }
 
-
-    pub fn min_bfs<F, E>(&self, start: Coord, mut visit: F, reached_end: E) 
-    where
-        F: FnMut(Coord, Option<Coord>, usize) -> (),
-        E: Fn(Coord) -> bool
-    {
-        let mut queue: BinaryHeap<(Reverse<usize>, Coord, Option<Coord>)> = BinaryHeap::new();
-        queue.push((Reverse(0), start, None));
-        let mut visited : HashSet<Coord> = HashSet::new();
-
-        while let Some((dist, curr, prev)) = queue.pop() {
-            visit(curr, prev, dist.0);
-            visited.insert(curr);
-            if reached_end(curr) {
-                return;
-            }
-
-            for neighbor in self.neighbors(curr) {
-                if !visited.contains(&neighbor) {
-                    queue.push((Reverse(dist.0 + 1), neighbor, Some(curr)));
-                }
-            }
-        }
-    }
-
     pub fn max_bfs<F, E>(&self, start: Coord, mut visit: F, reached_end: E) 
     where
         F: FnMut(Coord, Option<Coord>, usize) -> (),
@@ -244,71 +220,6 @@ impl Trails {
             }
         }
     }
-
-
-    pub fn dfs<F>(&self, start: Coord, mut visit: F) 
-    where
-        F: FnMut(Coord, Option<Coord>, usize) -> ()
-    {
-        let mut queue: VecDeque<(Coord, Option<Coord>, usize)> = VecDeque::new();
-        queue.push_back((start, None, 0));
-        let mut visited : HashSet<Coord> = HashSet::new();
-
-        while let Some((curr, prev, dist)) = queue.pop_back() {
-            visit(curr, prev, dist);
-            visited.insert(curr);
-
-            for neighbor in self.neighbors(curr) {
-                if !visited.contains(&neighbor) {
-                    queue.push_back((neighbor, Some(curr), dist + 1));
-                }
-            }
-        }
-    }
-
-
-    pub fn min_dfs<F, E>(&self, start: Coord, mut visit: F, reached_end: E) 
-    where
-        F: FnMut(Coord, Option<Coord>, usize) -> (),
-        E: Fn(Coord) -> bool
-    {
-        let mut queue: BinaryHeap<(Reverse<usize>, Coord, Option<Coord>)> = BinaryHeap::new();
-        queue.push((Reverse(0), start, None));
-        let mut visited : HashSet<Coord> = HashSet::new();
-
-        while let Some((dist, curr, prev)) = queue.pop() {
-            visit(curr, prev, dist.0);
-            visited.insert(curr);
-            if reached_end(curr) {
-                return;
-            }
-
-            for neighbor in self.neighbors(curr) {
-                if !visited.contains(&neighbor) {
-                    queue.push((Reverse(dist.0 + 1), neighbor, Some(curr)));
-                }
-            }
-        }
-    }
-
-
-    // pub fn shortest_path(&self, start: Coord, end: Coord) -> Option<Vec<(usize, usize, usize)>> {
-
-    //     let mut predecessors = HashMap::new();
-
-    //     self.min_bfs(
-    //         start, 
-    //         |curr, prev, _dist| {
-    //             predecessors.insert(curr, prev);
-    //         }, 
-    //         |e| e == end
-    //     );
-    //     Self::read_path_from_predecessors(
-    //         &predecessors,
-    //         start, 
-    //         end
-    //     )
-    // }
 
     pub fn longest_path(&self, start: Coord, end: Coord) -> Option<Vec<(usize, usize, usize)>> {
 
@@ -424,8 +335,6 @@ pub fn solve_part1(trails: &Trails) -> usize {
         .map(|&(coord, _)| coord)
         .collect::<Vec<_>>();
 
-    let splitters: HashSet<_> = splitters.into_iter().map(|(s, _)| s).collect();
-
     let mut distances: HashMap<Coord, HashMap<Coord, usize>> = HashMap::new();
 
     for &v in vertices.iter() {
@@ -454,164 +363,53 @@ pub fn solve_part1(trails: &Trails) -> usize {
         }
     }
 
-    // for (key, val) in distances.iter() {
-    //     println!("source: {:?}, distances: {:?}", key, val);
-    // }
-
     let mut edges = vec![];
+    let mut nodes = HashSet::new();
 
     for (&source, target_distances) in distances.iter() {
         for (&target, &dist) in target_distances.iter() {
+            nodes.insert(source);
+            nodes.insert(target);
             if dist != usize::MAX {
                 edges.push((source, target, dist));
             }
         }
     }
 
-    let graph = 
-    DiGraph::new()
-    .with_nodes(&vertices)
-    .with_edges(&edges);
+    let mut graph = petgraph::graph::Graph::<(isize, isize), usize>::new();
 
-    let mut longest_path_dist = 0;
-    let mut longest_path = vec![];
+    let mut node_ids = HashMap::new();
 
-    graph.all_paths_between(
-        start, 
-        end, 
-    |path, dist| {
-        if dist >= longest_path_dist {
-                longest_path_dist = dist;
-                longest_path = path;
+    for node in nodes {
+        let node_id = graph.add_node(node);
+        node_ids.insert(node, node_id);
+    }
+
+    for (source, target, dist) in edges {
+        graph.add_edge(*node_ids.get(&source).unwrap(), *node_ids.get(&target).unwrap(), dist);
+
+    }
+
+    let ordered = petgraph::algo::toposort(&graph, None).unwrap();
+
+    let mut distances_final = HashMap::new();
+    for &node_id in node_ids.values() {
+        distances_final.insert(node_id, i64::MIN);
+    }
+
+    distances_final.insert(*node_ids.get(&(0, 1)).unwrap(), 0);
+
+    for &node_id in ordered.iter() {
+        for edge in graph.edges(node_id) {
+            let best_so_far = *distances_final.get(&edge.target()).unwrap();
+            let candidate = *distances_final.get(&node_id).unwrap() + *edge.weight() as i64;
+            if candidate > best_so_far {
+                *distances_final.get_mut(&edge.target()).unwrap() = candidate;
             }
         }
-    );
-
-    let num_colors = longest_path.len() - 1;
-    let grad = colorgrad::magma();
-    let distinct_colors = grad.colors(num_colors);
-    let mut color_map = HashMap::new();
-
-    for (color_idx, window) in longest_path.windows(2).enumerate() {
-        let prev = window[0];
-        let curr = window[1];
-
-        let path: Vec<_> = 
-            trails
-            .longest_path(prev, curr)
-            .unwrap()
-            .into_iter()
-            .map(|(s, e, _)| (s, e))
-            .collect();
-
-        for coord in path {
-            color_map.insert((coord.0 as isize, coord.1 as isize), distinct_colors[color_idx].clone());
-        }
     }
 
-    trails
-    .show_colored(
-        |coord, _| {
-        
-        if splitters.contains(&coord) {
-            return Some("X".color(colored::Color::Red));
-        }
-
-        match color_map.get(&coord) {
-            Some(color) => {
-                let rgb = color.to_rgba8();
-                Some("O".color(colored::Color::TrueColor { r: rgb[0], g: rgb[1], b: rgb[2] }))
-            },
-            None => {
-                None
-            }
-        }
-    });
-
-    longest_path_dist
-}
-
-
-#[derive(Debug, Clone, Default)]
-pub struct DiGraph {
-    pub nodes: Vec<Coord>,
-    pub edges: Vec<(Coord, Coord, usize)>
-}
-
-impl DiGraph {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
-    pub fn with_nodes(self, nodes: &[Coord]) -> Self {
-        Self {
-            nodes: nodes.into_iter().copied().collect(),
-            edges: self.edges
-        }
-    }
-
-    pub fn with_edges(self, edges: &[(Coord, Coord, usize)]) -> Self {
-        Self {
-            nodes: self.nodes,
-            edges: edges.into_iter().copied().collect()
-        }
-    }
-
-    pub fn neighbors(&self, node: Coord) -> impl Iterator<Item=(Coord, usize)> + '_ {
-        self
-        .edges
-        .iter()
-        .filter_map(
-            move |&(source, target, dist)| {
-            match source == node {
-                true => Some((target, dist)),
-                false => None
-            }
-        })
-    }
-
-
-    pub fn dot(&self) -> String {
-
-        let edges_str = self.edges.iter().map(|&(s, e, w)| {
-            format!("\tn{:02}_{:02} -> n{:02}_{:02} [ label=\"{}\" ];", s.0, s.1, e.0, e.1, w)
-        }).collect::<Vec<String>>().join("\n");
-
-        format!("digraph G {{\n{}\n}}", edges_str)
-    }
-
-    fn all_paths_between_helper<P>(&self, start: Coord, end: Coord, visited: &mut HashSet<Coord>, path: &mut Vec<Coord>, dist: usize, visit: &mut P) 
-    where
-        P: FnMut(Vec<Coord>, usize)
-    {
-        visited.insert(start);
-        path.push(start);
-
-        if start == end {
-            visit(path.clone(), dist);
-        }
-        else {
-            for (neighbor, nbr_dist) in self.neighbors(start) {
-                if !visited.contains(&neighbor) {
-                    self.all_paths_between_helper(neighbor, end, visited, path, dist + nbr_dist, visit);
-                }
-            }
-        }
-
-        path.pop();
-        visited.remove(&start);
-    }
-
-    pub fn all_paths_between<P>(&self, start: Coord, end: Coord, mut visit: P) 
-    where
-        P: FnMut(Vec<Coord>, usize)
-    {
-        let mut visited = HashSet::new();
-        let mut path = vec![];
-
-        self.all_paths_between_helper(start, end, &mut visited, &mut path, 0, &mut visit);
-    }
-
+    *distances_final.get(node_ids.get(&end).unwrap()).unwrap() as usize
 }
 
 
